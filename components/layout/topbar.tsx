@@ -3,7 +3,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Search, Plus, Moon, Sun, Phone, Menu } from "lucide-react";
+import { Search, Plus, Moon, Sun, Phone, Menu, Volume2, VolumeX } from "lucide-react";
+import { isSoundOn, setSoundOn, playChime } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "./command-palette";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +18,20 @@ export function Topbar() {
   const { setTheme, resolvedTheme } = useTheme();
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
+
+  // Reactive sound preference
+  const [soundOn, setSoundOnLocal] = React.useState(true);
+  React.useEffect(() => {
+    setSoundOnLocal(isSoundOn());
+    const handler = (e: Event) => setSoundOnLocal((e as CustomEvent<boolean>).detail);
+    window.addEventListener("helio:sound-changed", handler as EventListener);
+    return () => window.removeEventListener("helio:sound-changed", handler as EventListener);
+  }, []);
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    if (next) playChime("success"); // gives the user audible confirmation
+  };
 
   // Scroll-driven border + shadow on the glass topbar — only appears once you scroll.
   const { scrollY } = useScroll();
@@ -85,6 +100,15 @@ export function Topbar() {
             <Phone className="h-4 w-4 mr-1.5" /> Start Calling
           </Button>
           <NotificationBell />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSound}
+            title={soundOn ? "Sound on — click to mute" : "Sound off — click to enable"}
+            aria-label={soundOn ? "Mute notifications" : "Enable notification sounds"}
+          >
+            {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
             {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>

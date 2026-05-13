@@ -24,6 +24,7 @@ export const isSupabaseConfigured =
 interface StoreState {
   // identity
   currentUserId: string;
+  signedIn: boolean;
   users: User[];
 
   // core entities
@@ -43,6 +44,8 @@ interface StoreState {
 
   // identity actions
   setCurrentUser: (id: string) => void;
+  signIn: (id: string) => void;
+  signOut: () => void;
   addUser: (u: Partial<User>) => User;
   updateUser: (id: string, patch: Partial<User>) => void;
   deactivateUser: (id: string) => void;
@@ -162,6 +165,7 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       currentUserId: "user-admin",
+      signedIn: false,
       users: SAMPLE_USERS,
 
       leads: [],
@@ -179,6 +183,12 @@ export const useStore = create<StoreState>()(
       seeded: false,
 
       setCurrentUser: (id) => set({ currentUserId: id }),
+      signIn: (id) => {
+        // Auto-seed the workspace on first sign-in so the app feels alive.
+        if (!get().seeded) get().loadSampleData();
+        set({ currentUserId: id, signedIn: true });
+      },
+      signOut: () => set({ signedIn: false }),
 
       addUser: (u) => {
         const user: User = {
@@ -232,6 +242,45 @@ export const useStore = create<StoreState>()(
             done: false,
             created_at: now,
           },
+          // Fires ~45s after sign-in so the notification chime + popup demoes itself
+          {
+            id: uid("rem-"),
+            org_id: "demo",
+            user_id: agentIds[0] ?? "user-sara",
+            created_by: "user-admin",
+            message: "Heads up — your top priority lead just entered their calling window.",
+            fires_at: new Date(Date.now() + 45 * 1000).toISOString(),
+            lead_id: leads[0]?.id ?? null,
+            project_id: null,
+            done: false,
+            created_at: now,
+          },
+        ];
+
+        // Seed a couple of sample chat messages between admin and first agent
+        const sampleMessages: Message[] = [
+          {
+            id: uid("msg-"),
+            org_id: "demo",
+            from_user: "user-admin",
+            to_user: agentIds[0] ?? "user-sara",
+            body: "Welcome aboard! Ping me here if you hit any blockers — I'm watching the dashboard. 🎯",
+            lead_id: null,
+            project_id: null,
+            read_at: null,
+            created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+          },
+          {
+            id: uid("msg-"),
+            org_id: "demo",
+            from_user: agentIds[0] ?? "user-sara",
+            to_user: "user-admin",
+            body: "Got it, thanks! Marcus Chen looks promising — going to dial him in the next window.",
+            lead_id: leads[0]?.id ?? null,
+            project_id: null,
+            read_at: null,
+            created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+          },
         ];
         const updateRequests: UpdateRequest[] = [
           {
@@ -284,6 +333,7 @@ export const useStore = create<StoreState>()(
           updateRequests,
           notifications,
           activity,
+          messages: sampleMessages,
           seeded: true,
         });
       },
@@ -912,7 +962,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: "helio-crm-store",
-      version: 2,
+      version: 3,
       migrate: (persisted: any, version) => {
         if (!persisted) return persisted;
         // v1 → v2: add lifecycle fields to leads + messages array
@@ -926,6 +976,14 @@ export const useStore = create<StoreState>()(
             }));
           }
           if (!Array.isArray(persisted.messages)) persisted.messages = [];
+        }
+        // v2 → v3: introduce signedIn flag
+        // If a returning user already has data + a current user, treat them as signed in
+        // so we don't bounce them to /login on a refresh.
+        if (version < 3) {
+          if (typeof persisted.signedIn !== "boolean") {
+            persisted.signedIn = !!(persisted.currentUserId && persisted.seeded);
+          }
         }
         return persisted;
       },
@@ -941,6 +999,9 @@ function randomColor(): string {
 // Selectors / role helpers
 export function useCurrentUser() {
   return useStore((s) => s.users.find((u) => u.id === s.currentUserId) ?? null);
+}
+export function useIsSignedIn() {
+  return useStore((s) => s.signedIn);
 }
 export function useIsAdmin() {
   return useStore((s) => {

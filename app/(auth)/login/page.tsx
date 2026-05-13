@@ -6,8 +6,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useStore, useIsSignedIn, useCurrentUser } from "@/lib/store";
+import { initials } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
+import { playChime } from "@/lib/sound";
+import { ArrowRight, Mail, Lock, Sparkles, Shield, User as UserIcon, Check } from "lucide-react";
 
 const HAS_SUPABASE =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -26,15 +29,24 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [greeting] = React.useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  const signedIn = useIsSignedIn();
+  const currentUser = useCurrentUser();
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => setHydrated(true), []);
 
+  // If a session already exists, skip the picker.
   React.useEffect(() => {
-    if (!HAS_SUPABASE) {
-      // demo mode — give a beat to admire the layout, then in
-      const t = setTimeout(() => router.replace("/dashboard"), 1200);
-      return () => clearTimeout(t);
+    if (hydrated && signedIn && currentUser) {
+      router.replace(currentUser.role === "admin" ? "/admin" : "/dashboard");
     }
-  }, [router]);
+  }, [hydrated, signedIn, currentUser, router]);
 
+  if (hydrated && signedIn) return null;
+
+  // Demo mode: show a dummy-user picker — anyone landing on the page chooses who to be.
+  if (!HAS_SUPABASE) return <DemoLogin greeting={greeting} />;
+
+  // Real auth path
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -43,6 +55,7 @@ export default function LoginPage() {
       const supa = createSupabaseBrowserClient();
       const { error } = await supa.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      playChime("success");
       toast.success("Welcome back ✨");
       router.push("/dashboard");
     } catch (e: any) {
@@ -52,40 +65,11 @@ export default function LoginPage() {
     }
   };
 
-  if (!HAS_SUPABASE) {
-    return (
-      <div className="text-center space-y-5 py-2">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-indigo-500 to-cold text-white shadow-elevation-3 shadow-inner-hl mx-auto"
-        >
-          <Sparkles className="h-6 w-6" />
-        </motion.div>
-        <div>
-          <h2 className="font-display text-2xl font-bold tracking-tight">Demo mode</h2>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            No password to remember. Loading your workspace…
-          </p>
-        </div>
-        <Button onClick={() => router.push("/dashboard")} size="lg" className="w-full">
-          Open Helio <ArrowRight className="h-4 w-4 ml-1.5" />
-        </Button>
-        <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground/80">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
-          Auto-redirecting in a moment…
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>
         <div className="text-xs font-medium text-primary uppercase tracking-wider mb-1.5 inline-flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3" />
-          {greeting.includes("?") ? "Hello there" : "Hello again"}
+          <Sparkles className="h-3 w-3" /> Hello again
         </div>
         <h2 className="font-display text-3xl font-bold tracking-tight">{greeting}</h2>
         <p className="text-sm text-muted-foreground mt-1.5">Sign in to pick up where you left off.</p>
@@ -96,37 +80,19 @@ export default function LoginPage() {
           <Label htmlFor="email">Email</Label>
           <div className="relative mt-1.5">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@agency.com"
-              className="pl-9 h-11"
-            />
+            <Input id="email" type="email" required autoComplete="email" autoFocus value={email}
+              onChange={(e) => setEmail(e.target.value)} placeholder="you@agency.com" className="pl-9 h-11" />
           </div>
         </div>
         <div>
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link href="/login" className="text-[11px] text-muted-foreground hover:text-primary transition-colors">
-              Forgot?
-            </Link>
+            <Link href="/login" className="text-[11px] text-muted-foreground hover:text-primary transition-colors">Forgot?</Link>
           </div>
           <div className="relative mt-1.5">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-9 h-11"
-            />
+            <Input id="password" type="password" required autoComplete="current-password" value={password}
+              onChange={(e) => setPassword(e.target.value)} className="pl-9 h-11" />
           </div>
         </div>
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
@@ -135,11 +101,122 @@ export default function LoginPage() {
       </form>
 
       <div className="text-center text-sm text-muted-foreground">
-        New here?{" "}
-        <Link href="/signup" className="text-primary font-medium hover:underline">
-          Make an account
-        </Link>
+        New here? <Link href="/signup" className="text-primary font-medium hover:underline">Make an account</Link>
       </div>
     </div>
+  );
+}
+
+function DemoLogin({ greeting }: { greeting: string }) {
+  const router = useRouter();
+  const users = useStore((s) => s.users);
+  const signIn = useStore((s) => s.signIn);
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+
+  const admins = users.filter((u) => u.role === "admin" && u.active);
+  const agents = users.filter((u) => u.role === "agent" && u.active);
+
+  const onPick = (userId: string, role: "admin" | "agent") => {
+    setPendingId(userId);
+    signIn(userId);
+    playChime("success");
+    const next = users.find((u) => u.id === userId);
+    toast.success(`Welcome, ${next?.full_name?.split(" ")[0] ?? "friend"} 👋`, {
+      description: role === "admin" ? "Heading to your command center." : "Loading your call queue.",
+    });
+    setTimeout(() => router.push(role === "admin" ? "/admin" : "/dashboard"), 350);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="text-xs font-medium text-primary uppercase tracking-wider mb-1.5 inline-flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3" /> Demo workspace
+        </div>
+        <h2 className="font-display text-3xl font-bold tracking-tight">{greeting}</h2>
+        <p className="text-sm text-muted-foreground mt-1.5">
+          Pick a seat. Each user has their own leads, dashboard, and inbox.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Shield className="h-3 w-3" /> Admin
+            <span className="text-muted-foreground/50 font-normal normal-case">— monitoring & oversight</span>
+          </div>
+          <div className="space-y-2">
+            {admins.map((u) => (
+              <UserSeat key={u.id} user={u} role="admin" onPick={onPick} pending={pendingId === u.id} />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <UserIcon className="h-3 w-3" /> Agents
+            <span className="text-muted-foreground/50 font-normal normal-case">— calling, follow-ups, pipeline</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {agents.map((u) => (
+              <UserSeat key={u.id} user={u} role="agent" onPick={onPick} pending={pendingId === u.id} compact />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground">Tip:</span> you can hop between seats anytime from the user picker in the top-right.
+        Try logging in as <b>Yahya</b> to see admin oversight, then switch to <b>Sara</b> to make a call.
+      </div>
+    </div>
+  );
+}
+
+function UserSeat({
+  user, role, onPick, pending, compact = false,
+}: {
+  user: { id: string; full_name: string; email: string; avatar_color: string };
+  role: "admin" | "agent";
+  onPick: (id: string, role: "admin" | "agent") => void;
+  pending: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <motion.button
+      onClick={() => onPick(user.id, role)}
+      whileTap={{ scale: 0.97 }}
+      disabled={pending}
+      className={[
+        "group w-full flex items-center gap-3 rounded-lg border border-border/60 bg-card/60 hover:bg-card hover:border-primary/40",
+        "px-3 py-2.5 text-left transition-all duration-base ease-ios shadow-elevation-1 hover:shadow-elevation-3",
+        pending ? "opacity-60 pointer-events-none" : "",
+      ].join(" ")}
+    >
+      <span
+        className="relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-elevation-2 shadow-inner-hl"
+        style={{ background: user.avatar_color }}
+      >
+        {initials(user.full_name)}
+        {pending && (
+          <motion.span
+            className="absolute -inset-0.5 rounded-full border-2 border-primary"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        )}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold truncate">{user.full_name}</div>
+        {!compact && (
+          <div className="text-[11px] text-muted-foreground truncate">{user.email}</div>
+        )}
+      </div>
+      {pending ? (
+        <Check className="h-4 w-4 text-primary shrink-0" />
+      ) : (
+        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+      )}
+    </motion.button>
   );
 }

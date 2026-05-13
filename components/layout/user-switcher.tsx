@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronDown, Shield, User as UserIcon, Check } from "lucide-react";
+import { ChevronDown, Shield, User as UserIcon, Check, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ export function UserSwitcher() {
   const users = useStore((s) => s.users);
   const currentUserId = useStore((s) => s.currentUserId);
   const setCurrentUser = useStore((s) => s.setCurrentUser);
+  const signOut = useStore((s) => s.signOut);
   const current = users.find((u) => u.id === currentUserId);
 
   const admins = users.filter((u) => u.role === "admin");
@@ -93,6 +94,14 @@ export function UserSwitcher() {
             {u.id === currentUserId && <Check className="h-3 w-3" />}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => { signOut(); router.replace("/login"); }}
+          className="gap-2 text-rose-600 focus:text-rose-600"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

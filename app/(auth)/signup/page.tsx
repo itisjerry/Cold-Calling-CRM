@@ -21,7 +21,8 @@ export default function SignupPage() {
 
   React.useEffect(() => {
     if (!HAS_SUPABASE) {
-      const t = setTimeout(() => router.replace("/dashboard"), 1200);
+      // No real signup in demo mode — bounce to the picker after a beat.
+      const t = setTimeout(() => router.replace("/login"), 1500);
       return () => clearTimeout(t);
     }
   }, [router]);
@@ -59,8 +60,13 @@ export default function SignupPage() {
         </motion.div>
         <div>
           <h2 className="font-display text-2xl font-bold tracking-tight">Demo mode</h2>
-          <p className="text-sm text-muted-foreground mt-1.5">No signup needed. Spinning up your workspace…</p>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            No signup needed — pick a seat at the door instead.
+          </p>
         </div>
+        <Link href="/login" className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">
+          Take me to the picker <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     );
   }
