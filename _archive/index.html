@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Helio CRM — Cold Calling Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-theme="light">
+
+<!-- ====== APP SHELL ====== -->
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">H</div>
+      <div class="brand-text">
+        <div class="brand-name">Helio</div>
+        <div class="brand-sub">Calling Command Center</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">Workspace</div>
+      <a class="nav-item active" data-view="dashboard"><span class="ico">⌂</span> Dashboard</a>
+      <a class="nav-item" data-view="callmode"><span class="ico">☏</span> Call Mode<span class="badge-live" id="queueBadge">0</span></a>
+      <a class="nav-item" data-view="leads"><span class="ico">☰</span> Leads</a>
+      <a class="nav-item" data-view="followups"><span class="ico">↻</span> Follow-ups</a>
+
+      <div class="nav-section">Pipeline</div>
+      <a class="nav-item" data-view="pipeline"><span class="ico">⛬</span> Pipeline</a>
+      <a class="nav-item" data-view="projects"><span class="ico">▤</span> Projects</a>
+
+      <div class="nav-section">Productivity</div>
+      <a class="nav-item" data-view="tasks"><span class="ico">✓</span> Tasks</a>
+      <a class="nav-item" data-view="calendar"><span class="ico">▦</span> Calendar</a>
+      <a class="nav-item" data-view="analytics"><span class="ico">▲</span> Analytics</a>
+
+      <div class="nav-section">Data</div>
+      <a class="nav-item" data-view="import"><span class="ico">⇪</span> Import Leads</a>
+      <a class="nav-item" data-view="settings"><span class="ico">⚙</span> Settings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">YM</div>
+        <div>
+          <div class="user-name">Caller</div>
+          <div class="user-sub" id="liveClock">--:--</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Topbar + Main -->
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">☰</button>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="globalSearch" placeholder="Search leads, companies, notes…  (Press / )" />
+        <span class="kbd">/</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" id="quickAddBtn">+ Quick add</button>
+        <button class="btn btn-primary" id="startCallingBtn">Start Calling →</button>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme">◐</button>
+      </div>
+    </header>
+
+    <section class="view-container" id="viewContainer">
+      <!-- Views injected here -->
+    </section>
+  </main>
+</div>
+
+<!-- ====== TEMPLATES ====== -->
+
+<!-- DASHBOARD -->
+<template id="tpl-dashboard">
+  <div class="view view-dashboard">
+    <div class="view-header">
+      <div>
+        <h1>Good <span id="greetTime">day</span>, let's close some deals.</h1>
+        <p class="muted">Here's your situation room for <span id="todayStr">today</span>.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" data-goto="callmode">Open Call Mode →</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Today's Queue</div><div class="kpi-value" id="kpiQueue">—</div><div class="kpi-sub" id="kpiQueueSub">leads ready now</div></div>
+      <div class="kpi-card"><div class="kpi-label">Calls Today</div><div class="kpi-value" id="kpiCalls">—</div><div class="kpi-sub">attempts logged</div></div>
+      <div class="kpi-card"><div class="kpi-label">Connect Rate</div><div class="kpi-value" id="kpiConnect">—</div><div class="kpi-sub">last 7 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">Qualified</div><div class="kpi-value" id="kpiQualified">—</div><div class="kpi-sub">this week</div></div>
+      <div class="kpi-card"><div class="kpi-label">Hot Leads</div><div class="kpi-value hot" id="kpiHot">—</div><div class="kpi-sub">need action</div></div>
+      <div class="kpi-card"><div class="kpi-label">Callbacks Due</div><div class="kpi-value warn" id="kpiCallbacks">—</div><div class="kpi-sub">today + overdue</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-header"><h3>Priority Queue — Now</h3><span class="muted small">leads in their calling window, sorted by score</span></div>
+        <div class="queue-list" id="dashQueue"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Reminders & Callbacks</h3></div>
+        <div class="reminder-list" id="dashReminders"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>This Week</h3></div>
+        <canvas id="weekChart" height="160"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Pipeline Snapshot</h3></div>
+        <div class="pipeline-snap" id="pipelineSnap"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- CALL MODE -->
+<template id="tpl-callmode">
+  <div class="view view-callmode">
+    <div class="call-shell">
+      <!-- Left: Queue -->
+      <div class="call-queue card">
+        <div class="card-header">
+          <h3>Today's Queue</h3>
+          <div class="queue-filters">
+            <button class="chip active" data-qfilter="all">All</button>
+            <button class="chip" data-qfilter="hot">Hot</button>
+            <button class="chip" data-qfilter="callback">Callbacks</button>
+            <button class="chip" data-qfilter="new">New</button>
+          </div>
+        </div>
+        <div class="queue-list" id="callQueueList"></div>
+      </div>
+
+      <!-- Center: Current Lead -->
+      <div class="call-current card" id="callCurrent">
+        <div class="empty-state" id="callEmptyState">
+          <div class="empty-illu">☏</div>
+          <h2>Pick a lead to start</h2>
+          <p>Helio orders your queue by timezone, importance, and follow-up logic. Click any lead on the left.</p>
+        </div>
+      </div>
+
+      <!-- Right: Notes / History / Disposition -->
+      <div class="call-side card" id="callSide" style="display:none">
+        <div class="tabs">
+          <button class="tab active" data-tab="disposition">Disposition</button>
+          <button class="tab" data-tab="history">History</button>
+          <button class="tab" data-tab="notes">Notes</button>
+          <button class="tab" data-tab="scripts">Scripts</button>
+        </div>
+        <div class="tab-body" data-tabbody="disposition"></div>
+        <div class="tab-body" data-tabbody="history" hidden></div>
+        <div class="tab-body" data-tabbody="notes" hidden></div>
+        <div class="tab-body" data-tabbody="scripts" hidden></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- LEADS LIST -->
+<template id="tpl-leads">
+  <div class="view view-leads">
+    <div class="view-header">
+      <div>
+        <h1>Leads</h1>
+        <p class="muted"><span id="leadCount">0</span> total · <span id="leadCountNew">0</span> new · <span id="leadCountHot">0</span> hot</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" data-goto="import">⇪ Import CSV</button>
+        <button class="btn btn-ghost" id="exportLeadsBtn">Export</button>
+        <button class="btn btn-primary" id="addLeadBtn">+ Add Lead</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input id="leadSearch" placeholder="Search by name, company, city, phone…" />
+      <select id="filterStatus">
+        <option value="">All Status</option>
+        <option>New</option><option>Attempting</option><option>Connected</option>
+        <option>In Discussion</option><option>Follow-up</option><option>Qualified</option>
+        <option>Not Interested</option><option>Dead</option>
+      </select>
+      <select id="filterTemp">
+        <option value="">All Temps</option>
+        <option>Hot</option><option>Warm</option><option>Cold</option>
+      </select>
+      <select id="filterAge">
+        <option value="">Any Age</option>
+        <option value="new">New (≤3d)</option>
+        <option value="recent">Recent (≤14d)</option>
+        <option value="old">Old (&gt;30d)</option>
+      </select>
+      <select id="filterAttempts">
+        <option value="">Any Attempts</option>
+        <option value="0">No attempts</option>
+        <option value="1-3">1–3 attempts</option>
+        <option value="4+">4+ attempts</option>
+      </select>
+      <select id="sortBy">
+        <option value="score">Sort: Score</option>
+        <option value="created">Sort: Date Added</option>
+        <option value="lastContact">Sort: Last Contact</option>
+        <option value="attempts">Sort: Attempts</option>
+        <option value="name">Sort: Name A–Z</option>
+      </select>
+    </div>
+
+    <div class="table-wrap card">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th style="width:28px"><input type="checkbox" id="selectAll" /></th>
+            <th>Lead</th>
+            <th>Company</th>
+            <th>Location · Local Time</th>
+            <th>Status</th>
+            <th>Temp</th>
+            <th>Score</th>
+            <th>Attempts</th>
+            <th>Last Contact</th>
+            <th>Added</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="leadsTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="bulk-bar" id="bulkBar" hidden>
+      <span id="bulkCount">0 selected</span>
+      <button class="btn btn-ghost" data-bulk="hot">Mark Hot</button>
+      <button class="btn btn-ghost" data-bulk="warm">Mark Warm</button>
+      <button class="btn btn-ghost" data-bulk="cold">Mark Cold</button>
+      <button class="btn btn-ghost" data-bulk="followup">Move to Follow-up</button>
+      <button class="btn btn-danger" data-bulk="delete">Delete</button>
+    </div>
+  </div>
+</template>
+
+<!-- FOLLOW-UPS -->
+<template id="tpl-followups">
+  <div class="view">
+    <div class="view-header">
+      <div><h1>Follow-ups</h1><p class="muted">Tuesday &amp; Thursday boosted. Unanswered hot leads at the top.</p></div>
+    </div>
+    <div class="followup-grid">
+      <div class="card"><div class="card-header"><h3>🔥 Hot — Unanswered</h3></div><div class="queue-list" id="fuHot"></div></div>
+      <div class="card"><div class="card-header"><h3>📞 Callbacks Due</h3></div><div class="queue-list" id="fuCallbacks"></div></div>
+      <div class="card"><div class="card-header"><h3>⏱ Best Day: Today</h3></div><div class="queue-list" id="fuBestDay"></div></div>
+      <div class="card"><div class="card-header"><h3>💤 Revival (4+ attempts)</h3></div><div class="queue-list" id="fuRevival"></div></div>
+    </div>
+  </div>
+</template>
+
+<!-- PIPELINE (Kanban) -->
+<template id="tpl-pipeline">
+  <div class="view">
+    <div class="view-header">
+      <div><h1>Sales Pipeline</h1><p class="muted">Drag leads through stages. Qualified moves to Projects.</p></div>
+    </div>
+    <div class="kanban" id="kanbanBoard"></div>
+  </div>
+</template>
+
+<!-- PROJECTS -->
+<template id="tpl-projects">
+  <div class="view">
+    <div class="view-header">
+      <div><h1>Projects</h1><p class="muted">Qualified leads become projects. Track delivery end-to-end.</p></div>
+      <div class="header-actions"><button class="btn btn-primary" id="addProjectBtn">+ New Project</button></div>
+    </div>
+    <div class="kanban" id="projectsBoard"></div>
+  </div>
+</template>
+
+<!-- TASKS -->
+<template id="tpl-tasks">
+  <div class="view">
+    <div class="view-header">
+      <div><h1>Tasks & Reminders</h1><p class="muted">Everything you owe yourself or a lead.</p></div>
+      <div class="header-actions"><button class="btn btn-primary" id="addTaskBtn">+ New Task</button></div>
+    </div>
+    <div class="task-grid">
+      <div class="card"><div class="card-header"><h3>Overdue</h3></div><div class="task-list" id="tasksOverdue"></div></div>
+      <div class="card"><div class="card-header"><h3>Today</h3></div><div class="task-list" id="tasksToday"></div></div>
+      <div class="card"><div class="card-header"><h3>Upcoming</h3></div><div class="task-list" id="tasksUpcoming"></div></div>
+      <div class="card"><div class="card-header"><h3>Done</h3></div><div class="task-list" id="tasksDone"></div></div>
+    </div>
+  </div>
+</template>
+
+<!-- CALENDAR -->
+<template id="tpl-calendar">
+  <div class="view">
+    <div class="view-header">
+      <div><h1>Calendar</h1><p class="muted">Callbacks, reminders, and project milestones.</p></div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" id="calPrev">‹</button>
+        <span id="calLabel" class="muted"></span>
+        <button class="btn btn-ghost" id="calNext">›</button>
+      </div>
+    </div>
+    <div class="calendar card" id="calendarGrid"></div>
+  </div>
+</template>
+
+<!-- ANALYTICS -->
+<template id="tpl-analytics">
+  <div class="view">
+    <div class="view-header"><div><h1>Analytics</h1><p class="muted">Trends, conversion, and effort over time.</p></div></div>
+    <div class="analytics-grid">
+      <div class="card"><div class="card-header"><h3>Activity (last 30 days)</h3></div><canvas id="chartActivity" height="200"></canvas></div>
+      <div class="card"><div class="card-header"><h3>Disposition Mix</h3></div><canvas id="chartDispo" height="200"></canvas></div>
+      <div class="card"><div class="card-header"><h3>Status Funnel</h3></div><canvas id="chartFunnel" height="200"></canvas></div>
+      <div class="card"><div class="card-header"><h3>Best Hours to Connect</h3></div><canvas id="chartHours" height="200"></canvas></div>
+      <div class="card"><div class="card-header"><h3>Weekly Summary</h3></div><div id="weeklySummary" class="summary-list"></div></div>
+      <div class="card"><div class="card-header"><h3>Monthly Summary</h3></div><div id="monthlySummary" class="summary-list"></div></div>
+    </div>
+  </div>
+</template>
+
+<!-- IMPORT -->
+<template id="tpl-import">
+  <div class="view">
+    <div class="view-header"><div><h1>Import Leads</h1><p class="muted">Drop a CSV or Excel-exported CSV. Duplicates are auto-detected and skipped.</p></div></div>
+
+    <div class="card">
+      <div class="import-drop" id="dropZone">
+        <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
+        <div class="drop-illu">⇪</div>
+        <h3>Drop CSV here or click to browse</h3>
+        <p class="muted small">Required columns: name, phone. Recommended: company, email, city, state, country, title, industry, source, notes</p>
+        <button class="btn btn-primary" id="browseBtn">Choose File</button>
+        <button class="btn btn-ghost" id="loadSampleBtn">Load Sample Data</button>
+      </div>
+    </div>
+
+    <div class="card" id="importPreview" hidden>
+      <div class="card-header"><h3>Preview & Map Columns</h3></div>
+      <div id="importMapping" class="import-mapping"></div>
+      <div id="importPreviewTable" class="table-wrap"></div>
+      <div class="import-actions">
+        <div id="importStats" class="muted"></div>
+        <div>
+          <button class="btn btn-ghost" id="cancelImport">Cancel</button>
+          <button class="btn btn-primary" id="confirmImport">Import Unique Leads</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- SETTINGS -->
+<template id="tpl-settings">
+  <div class="view">
+    <div class="view-header"><div><h1>Settings</h1><p class="muted">Tune the engine.</p></div></div>
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-header"><h3>Calling Window</h3></div>
+        <div class="settings-body">
+          <label>Start hour (local to lead)</label>
+          <input type="number" id="setStart" min="0" max="23" />
+          <label>End hour</label>
+          <input type="number" id="setEnd" min="0" max="23" />
+          <label><input type="checkbox" id="setBoostTueThu"> Boost Tue/Thu follow-ups</label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Lead Scoring Weights</h3></div>
+        <div class="settings-body">
+          <label>Hot weight <input type="number" id="wHot" /></label>
+          <label>Warm weight <input type="number" id="wWarm" /></label>
+          <label>Recency boost (days) <input type="number" id="wRecency" /></label>
+          <label>Attempt penalty (per attempt) <input type="number" id="wAttempt" /></label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Auto-Revival</h3></div>
+        <div class="settings-body">
+          <label>Attempts before moving to Revival</label>
+          <input type="number" id="setRevival" />
+          <label>Days before "old" lead</label>
+          <input type="number" id="setOld" />
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Danger Zone</h3></div>
+        <div class="settings-body">
+          <button class="btn btn-ghost" id="resetSampleBtn">Reload Sample Data</button>
+          <button class="btn btn-danger" id="wipeBtn">Wipe All Data</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h3>Save</h3></div>
+      <div class="settings-body"><button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button></div>
+    </div>
+  </div>
+</template>
+
+<!-- MODAL ROOT -->
+<div class="modal-root" id="modalRoot"></div>
+<div class="toast-root" id="toastRoot"></div>
+
+<!-- Quick log dialog (after-call disposition) -->
+<template id="tpl-quicklog">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Log Attempt — <span id="qlLeadName"></span></h3>
+      <button class="icon-btn close-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="dispo-grid">
+        <button class="dispo-btn good" data-dispo="Answered">✓ Answered</button>
+        <button class="dispo-btn" data-dispo="Voicemail">📩 Voicemail</button>
+        <button class="dispo-btn" data-dispo="No Answer">○ No Answer</button>
+        <button class="dispo-btn" data-dispo="Busy">⌬ Busy</button>
+        <button class="dispo-btn warn" data-dispo="Callback Requested">⏰ Callback</button>
+        <button class="dispo-btn good" data-dispo="Qualified">★ Qualified</button>
+        <button class="dispo-btn" data-dispo="Send Info">✉ Send Info</button>
+        <button class="dispo-btn bad" data-dispo="Not Interested">✕ Not Interested</button>
+        <button class="dispo-btn bad" data-dispo="Wrong Number">⚠ Wrong Number</button>
+      </div>
+      <label class="lbl">Quick note</label>
+      <textarea id="qlNote" rows="3" placeholder="What happened? Any commitments?"></textarea>
+      <div class="row">
+        <div>
+          <label class="lbl">Schedule callback?</label>
+          <input type="datetime-local" id="qlCallback" />
+        </div>
+        <div>
+          <label class="lbl">Update temperature</label>
+          <select id="qlTemp">
+            <option value="">— keep —</option>
+            <option>Hot</option><option>Warm</option><option>Cold</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost close-modal">Cancel</button>
+      <button class="btn btn-primary" id="qlSaveBtn">Save Attempt</button>
+    </div>
+  </div>
+</template>
+
+<script src="data/timezones.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
