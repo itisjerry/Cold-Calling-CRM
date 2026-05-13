@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { LeadHistory } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -70,6 +71,15 @@ export const TEMP_COLORS: Record<string, string> = {
   Warm: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
   Cold: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/20",
 };
+
+export function getLastDisposition(leadId: string, history: LeadHistory[]): string | null {
+  let latest: LeadHistory | null = null;
+  for (const h of history) {
+    if (h.lead_id !== leadId || h.type !== "call" || !h.disposition) continue;
+    if (!latest || +new Date(h.created_at) > +new Date(latest.created_at)) latest = h;
+  }
+  return latest?.disposition ?? null;
+}
 
 export const STATUS_COLORS: Record<string, string> = {
   New: "bg-slate-500/15 text-slate-600 dark:text-slate-300",

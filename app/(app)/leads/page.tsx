@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { cn, formatPhone, relativeTime, TEMP_COLORS, STATUS_COLORS, daysSince, initials } from "@/lib/utils";
+import { cn, formatPhone, relativeTime, TEMP_COLORS, STATUS_COLORS, daysSince, initials, getLastDisposition } from "@/lib/utils";
 import { scoreLead } from "@/lib/scoring";
 import { LocalTime } from "@/components/leads/local-time";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
@@ -27,6 +27,7 @@ type Scope = "mine" | "unassigned" | "all" | string;
 
 export default function LeadsPage() {
   const leads = useStore((s) => s.leads);
+  const history = useStore((s) => s.history);
   const users = useStore((s) => s.users);
   const settings = useStore((s) => s.settings);
   const bulkUpdate = useStore((s) => s.bulkUpdate);
@@ -39,6 +40,7 @@ export default function LeadsPage() {
   const [tempF, setTempF] = React.useState("all");
   const [ageF, setAgeF] = React.useState("all");
   const [attF, setAttF] = React.useState("all");
+  const [dispF, setDispF] = React.useState("all");
   const [sort, setSort] = React.useState("score");
   const [scope, setScope] = React.useState<Scope>(isAdmin ? "all" : "mine");
   const [range, setRange] = React.useState<DateRange>({ preset: "all_time" });
@@ -84,6 +86,9 @@ export default function LeadsPage() {
         return true;
       });
     }
+    if (dispF !== "all") {
+      xs = xs.filter((l) => getLastDisposition(l.id, history) === dispF);
+    }
     const scored = xs.map((l) => ({ ...l, _score: scoreLead(l, settings.scoring, settings.call_window_start, settings.call_window_end) }));
     if (sort === "score") scored.sort((a, b) => b._score - a._score);
     if (sort === "created") scored.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
@@ -91,7 +96,7 @@ export default function LeadsPage() {
     if (sort === "attempts") scored.sort((a, b) => b.attempts - a.attempts);
     if (sort === "name") scored.sort((a, b) => a.name.localeCompare(b.name));
     return scored;
-  }, [leads, scope, range, resolved, search, statusF, tempF, ageF, attF, sort, settings, me]);
+  }, [leads, history, scope, range, resolved, search, statusF, tempF, ageF, attF, dispF, sort, settings, me]);
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -189,6 +194,18 @@ export default function LeadsPage() {
               <SelectItem value="0">No attempts</SelectItem>
               <SelectItem value="1-3">1–3 attempts</SelectItem>
               <SelectItem value="4+">4+ attempts</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={dispF} onValueChange={setDispF}>
+            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any last call</SelectItem>
+              <SelectItem value="Voicemail">Voicemail</SelectItem>
+              <SelectItem value="No Answer">Unanswered</SelectItem>
+              <SelectItem value="Busy">Busy</SelectItem>
+              <SelectItem value="Answered">Answered</SelectItem>
+              <SelectItem value="Callback Requested">Callback Requested</SelectItem>
+              <SelectItem value="Wrong Number">Wrong Number</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sort} onValueChange={setSort}>

@@ -5,8 +5,8 @@ import { useStore } from "@/lib/store";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LocalTime } from "@/components/leads/local-time";
-import { cn, isTueOrThu, TEMP_COLORS, relativeTime, daysSince } from "@/lib/utils";
-import { Flame, Clock, Calendar as CalendarIcon, Zap } from "lucide-react";
+import { cn, isTueOrThu, TEMP_COLORS, relativeTime, daysSince, getLastDisposition } from "@/lib/utils";
+import { Flame, Clock, Calendar as CalendarIcon, Zap, Voicemail, PhoneOff } from "lucide-react";
 
 function LeadStrip({ lead }: { lead: any }) {
   return (
@@ -25,10 +25,13 @@ function LeadStrip({ lead }: { lead: any }) {
 
 export default function FollowupsPage() {
   const leads = useStore((s) => s.leads);
+  const history = useStore((s) => s.history);
   const settings = useStore((s) => s.settings);
 
+  const openStatuses = ["Connected", "In Discussion", "Qualified", "Not Interested", "Dead"];
+
   const hotUnanswered = leads
-    .filter((l) => l.temperature === "Hot" && l.attempts > 0 && !["Connected", "In Discussion", "Qualified", "Not Interested", "Dead"].includes(l.status))
+    .filter((l) => l.temperature === "Hot" && l.attempts > 0 && !openStatuses.includes(l.status))
     .slice(0, 20);
 
   const callbacks = leads
@@ -43,6 +46,14 @@ export default function FollowupsPage() {
 
   const revival = leads
     .filter((l) => l.attempts >= settings.revival_attempts && !["Qualified", "Won", "Dead", "Not Interested"].includes(l.status))
+    .slice(0, 20);
+
+  const voicemails = leads
+    .filter((l) => !openStatuses.includes(l.status) && getLastDisposition(l.id, history) === "Voicemail")
+    .slice(0, 20);
+
+  const unanswered = leads
+    .filter((l) => !openStatuses.includes(l.status) && getLastDisposition(l.id, history) === "No Answer")
     .slice(0, 20);
 
   return (
@@ -83,6 +94,22 @@ export default function FollowupsPage() {
           <div className="p-2 pt-0 space-y-1 max-h-[520px] overflow-y-auto">
             {revival.length === 0 ? <p className="p-4 text-sm text-muted-foreground text-center">No revival candidates.</p>
               : revival.map((l) => <LeadStrip key={l.id} lead={l} />)}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Voicemail className="h-4 w-4 text-indigo-500" /> Voicemails left ({voicemails.length})</CardTitle></CardHeader>
+          <div className="p-2 pt-0 space-y-1 max-h-[520px] overflow-y-auto">
+            {voicemails.length === 0 ? <p className="p-4 text-sm text-muted-foreground text-center">No voicemails awaiting a callback.</p>
+              : voicemails.map((l) => <LeadStrip key={l.id} lead={l} />)}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><PhoneOff className="h-4 w-4 text-slate-500" /> Unanswered ({unanswered.length})</CardTitle></CardHeader>
+          <div className="p-2 pt-0 space-y-1 max-h-[520px] overflow-y-auto">
+            {unanswered.length === 0 ? <p className="p-4 text-sm text-muted-foreground text-center">No unanswered calls to retry.</p>
+              : unanswered.map((l) => <LeadStrip key={l.id} lead={l} />)}
           </div>
         </Card>
       </div>
