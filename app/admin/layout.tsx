@@ -8,6 +8,7 @@ import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/motion/page-transition";
 import { BottomTabs } from "@/components/layout/bottom-tabs";
+import { AppFooter } from "@/components/layout/app-footer";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = useIsAdmin();
@@ -62,6 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
             <PageTransition>{children}</PageTransition>
+            <AppFooter />
           </div>
         </main>
       </div>

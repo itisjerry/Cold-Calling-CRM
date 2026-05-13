@@ -1,0 +1,12 @@
+{
+  "name": "Helio CRM",
+  "short_name": "Helio",
+  "description": "The calling command center for modern agencies — a product of Pixel Architecture.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a1024",
+  "theme_color": "#0a84ff",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

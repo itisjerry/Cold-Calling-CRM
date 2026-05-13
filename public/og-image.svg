@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Helio CRM — Calling Command Center">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1024"/>
+      <stop offset="55%" stop-color="#0c2042"/>
+      <stop offset="100%" stop-color="#0a3361"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.18" cy="0.22" r="0.55">
+      <stop offset="0%" stop-color="#0a84ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#0a84ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.85" cy="0.85" r="0.45">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a84ff"/>
+      <stop offset="60%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="text" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#bfd9ff"/>
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1.2" fill="#ffffff" fill-opacity="0.07"/>
+    </pattern>
+    <filter id="soft">
+      <feGaussianBlur stdDeviation="0.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Brand mark -->
+  <g transform="translate(80, 80)">
+    <rect width="76" height="76" rx="20" fill="url(#brand)"/>
+    <text x="38" y="55" text-anchor="middle" fill="#ffffff" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="42" font-weight="800">H</text>
+  </g>
+  <text x="180" y="118" fill="#ffffff" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="28" font-weight="700">Helio CRM</text>
+  <text x="180" y="146" fill="#9bb6e0" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">a product of Pixel Architecture</text>
+
+  <!-- Headline -->
+  <text x="80" y="320" fill="url(#text)" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="78" font-weight="800" letter-spacing="-2">The calling command</text>
+  <text x="80" y="408" fill="url(#text)" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="78" font-weight="800" letter-spacing="-2">center for closers.</text>
+
+  <!-- Subline -->
+  <text x="80" y="478" fill="#bfd2f0" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="24" font-weight="400">Timezone-aware queues · auto-cadence · no lead wasted.</text>
+
+  <!-- Pill chips -->
+  <g transform="translate(80, 510)">
+    <g>
+      <rect width="200" height="44" rx="22" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="100" y="29" text-anchor="middle" fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">⚡ Auto-schedule</text>
+    </g>
+    <g transform="translate(216, 0)">
+      <rect width="200" height="44" rx="22" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="100" y="29" text-anchor="middle" fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">🛟 Smart sandbox</text>
+    </g>
+    <g transform="translate(432, 0)">
+      <rect width="220" height="44" rx="22" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="110" y="29" text-anchor="middle" fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">🎯 Admin oversight</text>
+    </g>
+  </g>
+
+  <!-- Pixel Architecture mark, top right -->
+  <g transform="translate(990, 78)">
+    <rect width="130" height="40" rx="20" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="65" y="26" text-anchor="middle" fill="#bfd2f0" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600">Pixel Architecture</text>
+  </g>
+</svg>

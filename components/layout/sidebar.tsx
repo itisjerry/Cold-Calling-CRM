@@ -7,18 +7,25 @@ import {
   LayoutDashboard, Phone, Users, RotateCcw, GitBranch, Briefcase,
   CheckSquare, Calendar, BarChart3, Upload, Settings, Sparkles,
   Shield, Activity, Trophy, FileText, Bell, Inbox, UserCog,
+  AlertTriangle, X as XIcon, MessageSquare,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
-import { useStore, useCurrentUser, useIsAdmin } from "@/lib/store";
+import { useStore, useCurrentUser, useIsAdmin, useUnreadMessageCount } from "@/lib/store";
 import { callWindowState } from "@/lib/timezones";
+import { bucketLead } from "@/lib/lead-scheduler";
 
 const AGENT_NAV = [
-  { section: "Workspace", items: [
+  { section: "Today", items: [
     { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
     { href: "/call-mode",  label: "Call Mode",  icon: Phone, live: true },
-    { href: "/leads",      label: "My Leads",   icon: Users, scope: "mine" as const },
     { href: "/follow-ups", label: "Follow-ups", icon: RotateCcw },
     { href: "/inbox",      label: "Inbox",      icon: Inbox, badge: "updates" as const },
+    { href: "/messages",   label: "Messages",   icon: MessageSquare, badge: "messages" as const },
+  ]},
+  { section: "Leads", items: [
+    { href: "/leads",            label: "My Leads",       icon: Users, scope: "mine" as const },
+    { href: "/sandbox",          label: "Sandbox",        icon: AlertTriangle, badge: "sandbox" as const },
+    { href: "/not-interested",   label: "Not Interested", icon: XIcon, badge: "ni" as const },
   ]},
   { section: "Pipeline", items: [
     { href: "/pipeline",   label: "Pipeline",   icon: GitBranch },
@@ -31,8 +38,7 @@ const AGENT_NAV = [
     { href: "/analytics",  label: "Analytics",  icon: BarChart3 },
     { href: "/reports",    label: "Reports",    icon: FileText },
   ]},
-  { section: "Data", items: [
-    { href: "/import",     label: "Import",     icon: Upload },
+  { section: "Account", items: [
     { href: "/settings",   label: "Settings",   icon: Settings },
   ]},
 ];
@@ -47,11 +53,15 @@ const ADMIN_NAV = [
     { href: "/admin/leaderboard",label: "Leaderboard",     icon: Trophy },
     { href: "/admin/reports",    label: "Reports",         icon: FileText },
   ]},
-  { section: "My workspace", items: [
-    { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
-    { href: "/call-mode",  label: "Call Mode",  icon: Phone },
-    { href: "/leads",      label: "Leads",      icon: Users },
-    { href: "/follow-ups", label: "Follow-ups", icon: RotateCcw },
+  { section: "Lead pools", items: [
+    { href: "/sandbox",          label: "Sandbox",        icon: AlertTriangle, badge: "sandbox" as const },
+    { href: "/not-interested",   label: "Not Interested", icon: XIcon, badge: "ni" as const },
+  ]},
+  { section: "Communicate", items: [
+    { href: "/messages",   label: "Messages",   icon: MessageSquare, badge: "messages" as const },
+    { href: "/inbox",      label: "Inbox",      icon: Inbox },
+  ]},
+  { section: "Workspace", items: [
     { href: "/pipeline",   label: "Pipeline",   icon: GitBranch },
     { href: "/tasks",      label: "Tasks",      icon: CheckSquare },
     { href: "/reminders",  label: "Reminders",  icon: Bell },
@@ -76,14 +86,26 @@ export function Sidebar() {
 
   const myId = currentUser?.id;
   const myLeads = React.useMemo(() => leads.filter((l) => l.owner_id === myId), [leads, myId]);
+  const unreadMessages = useUnreadMessageCount();
 
   const liveCount = React.useMemo(() => {
     const pool = isAdmin ? leads : myLeads;
     return pool.filter((l) =>
       callWindowState(l.timezone, settings.call_window_start, settings.call_window_end) === "in"
       && !["Dead", "Not Interested", "Qualified"].includes(l.status)
+      && !l.sandboxed
     ).length;
   }, [leads, myLeads, settings, isAdmin]);
+
+  const sandboxCount = React.useMemo(() => {
+    const pool = isAdmin ? leads : myLeads;
+    return pool.filter((l) => bucketLead(l) === "sandbox").length;
+  }, [leads, myLeads, isAdmin]);
+
+  const niCount = React.useMemo(() => {
+    const pool = isAdmin ? leads : myLeads;
+    return pool.filter((l) => l.status === "Not Interested").length;
+  }, [leads, myLeads, isAdmin]);
 
   const openTasks = React.useMemo(
     () => tasks.filter((t) => !t.done && (isAdmin ? true : t.user_id === myId)).length,
@@ -104,6 +126,9 @@ export function Sidebar() {
     if (slot === "tasks") return openTasks;
     if (slot === "reminders") return openReminders;
     if (slot === "updates") return pendingUpdates;
+    if (slot === "sandbox") return sandboxCount;
+    if (slot === "ni") return niCount;
+    if (slot === "messages") return unreadMessages;
     return 0;
   };
 
@@ -114,9 +139,11 @@ export function Sidebar() {
           <span className="relative z-10">H</span>
           <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
         </div>
-        <div className="flex flex-col">
-          <span className="font-display text-sm font-semibold leading-none tracking-tight">Helio</span>
-          <span className="text-[10px] text-muted-foreground leading-none mt-1">
+        <div className="flex flex-col min-w-0">
+          <span className="font-display text-sm font-semibold leading-none tracking-tight">
+            Helio <span className="text-muted-foreground/80 font-normal">CRM</span>
+          </span>
+          <span className="text-[10px] text-muted-foreground leading-none mt-1 truncate">
             {isAdmin ? "Admin Console" : "Calling Command Center"}
           </span>
         </div>
@@ -175,7 +202,7 @@ export function Sidebar() {
         </nav>
       </LayoutGroup>
 
-      <div className="border-t border-border/60 p-3">
+      <div className="border-t border-border/60 p-3 space-y-2">
         <div className="flex items-center gap-2 rounded-md p-2 hover:bg-accent transition-colors duration-base">
           {currentUser ? (
             <span
@@ -194,6 +221,17 @@ export function Sidebar() {
             </div>
           </div>
         </div>
+        <a
+          href="https://www.pixelarchitecture.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-[10px] text-muted-foreground/70 hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-accent/40"
+        >
+          Powered by{" "}
+          <span className="font-semibold bg-gradient-to-r from-primary to-cold bg-clip-text text-transparent">
+            Pixel Architecture
+          </span>
+        </a>
       </div>
     </aside>
   );

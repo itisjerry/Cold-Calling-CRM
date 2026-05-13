@@ -47,6 +47,9 @@ function mkLead(
     next_callback_at: data.next_callback_at ?? null,
     last_contact_at: data.last_contact_at ?? null,
     notes: data.notes ?? null,
+    next_attempt_at: data.next_attempt_at ?? null,
+    sandboxed: data.sandboxed ?? false,
+    not_interested_reason: data.not_interested_reason ?? null,
     created_at: data.created_at ?? daysAgo(Math.floor(Math.random() * 30)),
     updated_at: new Date().toISOString(),
   };

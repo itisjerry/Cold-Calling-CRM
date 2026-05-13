@@ -8,10 +8,12 @@ import { persist } from "zustand/middleware";
 import type {
   Lead, LeadHistory, Project, Task, OrgSettings, LeadStatus, LeadTemp, PipelineStage, ProjectStage,
   User, Reminder, UpdateRequest, Notification, ActivityEvent, SavedView, OrgBranding, NotificationKind,
+  Message, Disposition,
 } from "@/types";
 import { DEFAULT_WEIGHTS } from "./scoring";
 import { normalizePhone } from "./utils";
 import { resolveTimezone } from "./timezones";
+import { scheduleNextAttempt } from "./lead-scheduler";
 import {
   SAMPLE_LEADS, SAMPLE_TASKS, SAMPLE_HISTORY, SAMPLE_PROJECTS, SAMPLE_USERS,
 } from "./sample-data";
@@ -34,6 +36,7 @@ interface StoreState {
   notifications: Notification[];
   activity: ActivityEvent[];
   savedViews: SavedView[];
+  messages: Message[];
 
   settings: OrgSettings;
   seeded: boolean;
@@ -60,6 +63,20 @@ interface StoreState {
 
   // history
   addHistory: (entry: Partial<LeadHistory> & { lead_id: string }) => void;
+
+  // lifecycle (algorithm-driven)
+  logCallAttempt: (input: {
+    lead_id: string;
+    disposition: Disposition;
+    note?: string | null;
+    behavior_note?: string | null;
+    callback_at?: string | null;
+    new_temperature?: LeadTemp | null;
+    not_interested_reason?: string | null;
+  }) => { next_attempt_at: string | null; rationale: string; sandboxed: boolean };
+  markNotInterested: (lead_id: string, reason: string) => void;
+  restoreFromSandbox: (lead_id: string) => void;
+  sendToSandbox: (lead_id: string) => void;
 
   // projects
   addProject: (p: Partial<Project>) => Project;
@@ -94,6 +111,11 @@ interface StoreState {
   // saved views
   saveView: (v: Partial<SavedView> & { name: string; scope: SavedView["scope"]; query: SavedView["query"] }) => SavedView;
   deleteView: (id: string) => void;
+
+  // messages (chat between admin <-> agent, optionally tagged to a lead/project)
+  sendMessage: (m: { to_user: string; body: string; lead_id?: string | null; project_id?: string | null }) => Message;
+  markMessageRead: (id: string) => void;
+  markThreadRead: (otherUserId: string) => void;
 
   // settings
   updateSettings: (patch: Partial<OrgSettings>) => void;
@@ -151,6 +173,7 @@ export const useStore = create<StoreState>()(
       notifications: [],
       activity: [],
       savedViews: [],
+      messages: [],
 
       settings: DEFAULT_SETTINGS,
       seeded: false,
@@ -301,6 +324,9 @@ export const useStore = create<StoreState>()(
           next_callback_at: lead.next_callback_at ?? null,
           last_contact_at: lead.last_contact_at ?? null,
           notes: lead.notes ?? null,
+          next_attempt_at: lead.next_attempt_at ?? null,
+          sandboxed: lead.sandboxed ?? false,
+          not_interested_reason: lead.not_interested_reason ?? null,
           created_at: lead.created_at ?? nowIso(),
           updated_at: nowIso(),
         };
@@ -340,6 +366,9 @@ export const useStore = create<StoreState>()(
             next_callback_at: null,
             last_contact_at: null,
             notes: lead.notes ?? null,
+            next_attempt_at: null,
+            sandboxed: false,
+            not_interested_reason: null,
             created_at: nowIso(),
             updated_at: nowIso(),
           } as Lead;
@@ -500,6 +529,101 @@ export const useStore = create<StoreState>()(
             payload: { disposition: h.disposition },
           });
         }
+      },
+
+      logCallAttempt: (input) => {
+        const lead = get().leads.find((l) => l.id === input.lead_id);
+        if (!lead) {
+          return { next_attempt_at: null, rationale: "Lead not found.", sandboxed: false };
+        }
+        const result = scheduleNextAttempt(
+          lead,
+          input.disposition,
+          get().history,
+          get().settings,
+          input.callback_at ?? null,
+        );
+
+        // 1) Add the call history entry
+        get().addHistory({
+          lead_id: input.lead_id,
+          type: "call",
+          disposition: input.disposition,
+          note: input.note ?? null,
+          meta: {
+            scheduled_next: result.next_attempt_at,
+            rationale: result.rationale,
+            attempt_number: lead.attempts + 1,
+          },
+        });
+
+        // 2) Apply lifecycle patch
+        const patch: Partial<Lead> = {
+          status: result.status,
+          next_attempt_at: result.next_attempt_at,
+          sandboxed: result.sandboxed,
+        };
+        if (input.disposition === "Callback Requested" && input.callback_at) {
+          patch.next_callback_at = input.callback_at;
+        }
+        if (input.new_temperature) patch.temperature = input.new_temperature;
+        if (input.disposition === "Not Interested") {
+          patch.not_interested_reason = input.not_interested_reason ?? input.behavior_note ?? input.note ?? null;
+        }
+        if (input.behavior_note) {
+          const stamp = new Date().toLocaleString();
+          const prefix = lead.notes ? `${lead.notes}\n\n` : "";
+          patch.notes = `${prefix}[${stamp}] ${input.disposition}: ${input.behavior_note}`;
+        }
+        // Pipeline branch on first Connected/Qualified
+        if (input.disposition === "Qualified") patch.pipeline = "Qualified";
+        if (input.disposition === "Answered" && lead.pipeline === "New") patch.pipeline = "Contacted";
+
+        get().updateLead(input.lead_id, patch);
+
+        if (result.sandboxed) {
+          get().logActivity({
+            kind: "lead_sandboxed",
+            target_table: "leads",
+            target_id: input.lead_id,
+            payload: { attempts: lead.attempts + 1, lead_name: lead.name },
+          });
+        }
+
+        return {
+          next_attempt_at: result.next_attempt_at,
+          rationale: result.rationale,
+          sandboxed: result.sandboxed,
+        };
+      },
+
+      markNotInterested: (lead_id, reason) => {
+        get().updateLead(lead_id, {
+          status: "Not Interested",
+          not_interested_reason: reason,
+          next_attempt_at: null,
+        });
+        get().addHistory({
+          lead_id,
+          type: "status",
+          disposition: "Not Interested",
+          note: `Marked Not Interested — ${reason}`,
+        });
+      },
+
+      restoreFromSandbox: (lead_id) => {
+        get().updateLead(lead_id, {
+          sandboxed: false,
+          attempts: 0,
+          status: "New",
+          next_attempt_at: null,
+        });
+        get().addHistory({ lead_id, type: "status", disposition: null, note: "Restored from Sandbox — attempts reset to 0." });
+      },
+
+      sendToSandbox: (lead_id) => {
+        get().updateLead(lead_id, { sandboxed: true, next_attempt_at: null });
+        get().addHistory({ lead_id, type: "status", disposition: null, note: "Manually moved to Sandbox." });
       },
 
       addProject: (p) => {
@@ -737,6 +861,46 @@ export const useStore = create<StoreState>()(
       deleteView: (id) =>
         set({ savedViews: get().savedViews.filter((v) => v.id !== id) }),
 
+      sendMessage: (m) => {
+        const actor = get().currentUserId;
+        const msg: Message = {
+          id: uid("msg-"),
+          org_id: "demo",
+          from_user: actor,
+          to_user: m.to_user,
+          body: m.body,
+          lead_id: m.lead_id ?? null,
+          project_id: m.project_id ?? null,
+          read_at: null,
+          created_at: nowIso(),
+        };
+        set({ messages: [msg, ...get().messages] });
+        get().pushNotification({
+          user_id: m.to_user,
+          kind: "system",
+          title: "New message",
+          body: m.body.slice(0, 120),
+          link: `/messages`,
+        });
+        return msg;
+      },
+      markMessageRead: (id) =>
+        set({
+          messages: get().messages.map((m) =>
+            m.id === id ? { ...m, read_at: nowIso() } : m
+          ),
+        }),
+      markThreadRead: (otherUserId) => {
+        const me = get().currentUserId;
+        set({
+          messages: get().messages.map((m) =>
+            m.from_user === otherUserId && m.to_user === me && !m.read_at
+              ? { ...m, read_at: nowIso() }
+              : m
+          ),
+        });
+      },
+
       updateSettings: (patch) => set({ settings: { ...get().settings, ...patch } }),
       updateBranding: (patch) =>
         set({
@@ -746,7 +910,26 @@ export const useStore = create<StoreState>()(
           },
         }),
     }),
-    { name: "helio-crm-store" }
+    {
+      name: "helio-crm-store",
+      version: 2,
+      migrate: (persisted: any, version) => {
+        if (!persisted) return persisted;
+        // v1 → v2: add lifecycle fields to leads + messages array
+        if (version < 2) {
+          if (Array.isArray(persisted.leads)) {
+            persisted.leads = persisted.leads.map((l: any) => ({
+              ...l,
+              next_attempt_at: l.next_attempt_at ?? null,
+              sandboxed: l.sandboxed ?? false,
+              not_interested_reason: l.not_interested_reason ?? null,
+            }));
+          }
+          if (!Array.isArray(persisted.messages)) persisted.messages = [];
+        }
+        return persisted;
+      },
+    }
   )
 );
 
@@ -767,4 +950,12 @@ export function useIsAdmin() {
 }
 export function useAgents() {
   return useStore((s) => s.users.filter((u) => u.role === "agent" && u.active));
+}
+
+/** Unread inbound messages for the current user. */
+export function useUnreadMessageCount() {
+  return useStore((s) => {
+    const me = s.currentUserId;
+    return s.messages.filter((m) => m.to_user === me && !m.read_at).length;
+  });
 }

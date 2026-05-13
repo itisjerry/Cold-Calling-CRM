@@ -88,8 +88,29 @@ export interface Lead {
   next_callback_at: string | null;
   last_contact_at: string | null;
   notes: string | null;
+  /** Auto-scheduled next attempt time (algorithm). Null = ready now / sandbox / done. */
+  next_attempt_at: string | null;
+  /** True once attempts >= max_attempts and lead exhausted active rotation. */
+  sandboxed: boolean;
+  /** Reason captured when status set to "Not Interested". */
+  not_interested_reason: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Chat message between admin and agent. May tag a lead or project. */
+export interface Message {
+  id: string;
+  org_id: string;
+  /** Sender id */
+  from_user: string;
+  /** Recipient id */
+  to_user: string;
+  body: string;
+  lead_id: string | null;
+  project_id: string | null;
+  read_at: string | null;
+  created_at: string;
 }
 
 export interface LeadHistory {

@@ -2,10 +2,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ArrowRight, Mail, Lock, User, Sparkles } from "lucide-react";
 
 const HAS_SUPABASE =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -18,7 +20,10 @@ export default function SignupPage() {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (!HAS_SUPABASE) router.replace("/dashboard");
+    if (!HAS_SUPABASE) {
+      const t = setTimeout(() => router.replace("/dashboard"), 1200);
+      return () => clearTimeout(t);
+    }
   }, [router]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -32,7 +37,7 @@ export default function SignupPage() {
         options: { data: { full_name: fullName } },
       });
       if (error) throw error;
-      toast.success("Account created — check your email to confirm");
+      toast.success("Account created — check your email to confirm ✨");
       router.push("/login");
     } catch (e: any) {
       toast.error(e?.message || "Sign-up failed");
@@ -43,9 +48,19 @@ export default function SignupPage() {
 
   if (!HAS_SUPABASE) {
     return (
-      <div className="text-center space-y-3">
-        <h2 className="text-2xl font-semibold">Demo mode</h2>
-        <p className="text-sm text-muted-foreground">No signup needed. Loading the app…</p>
+      <div className="text-center space-y-5 py-2">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-indigo-500 to-cold text-white shadow-elevation-3 shadow-inner-hl mx-auto"
+        >
+          <Sparkles className="h-6 w-6" />
+        </motion.div>
+        <div>
+          <h2 className="font-display text-2xl font-bold tracking-tight">Demo mode</h2>
+          <p className="text-sm text-muted-foreground mt-1.5">No signup needed. Spinning up your workspace…</p>
+        </div>
       </div>
     );
   }
@@ -53,19 +68,44 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Create your account</h2>
-        <p className="text-sm text-muted-foreground mt-1">Start closing more deals today.</p>
+        <div className="text-xs font-medium text-primary uppercase tracking-wider mb-1.5 inline-flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3" />
+          Welcome
+        </div>
+        <h2 className="font-display text-3xl font-bold tracking-tight">Let's get you set up.</h2>
+        <p className="text-sm text-muted-foreground mt-1.5">Takes 30 seconds. No credit card.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-3">
-        <div><Label htmlFor="name">Full name</Label><Input id="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1.5" /></div>
-        <div><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" /></div>
-        <div><Label htmlFor="password">Password</Label><Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} className="mt-1.5" /></div>
-        <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : "Create account"}</Button>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="name">Full name</Label>
+          <div className="relative mt-1.5">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input id="name" required autoFocus value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-11" placeholder="Sara Iqbal" />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <div className="relative mt-1.5">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9 h-11" placeholder="you@agency.com" />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <div className="relative mt-1.5">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9 h-11" placeholder="At least 8 characters" />
+          </div>
+        </div>
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading ? "Creating account…" : <>Create account <ArrowRight className="h-4 w-4 ml-1.5" /></>}
+        </Button>
       </form>
 
       <div className="text-center text-sm text-muted-foreground">
-        Already have an account? <Link href="/login" className="text-primary hover:underline">Sign in</Link>
+        Already have an account?{" "}
+        <Link href="/login" className="text-primary font-medium hover:underline">Sign in</Link>
       </div>
     </div>
   );

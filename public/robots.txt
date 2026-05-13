@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Helio CRM — a product of Pixel Architecture
+# https://www.pixelarchitecture.dev/
