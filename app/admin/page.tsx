@@ -62,21 +62,15 @@ export default function AdminDashboardPage() {
         .sort((a, b) => +new Date(a.next_callback_at!) - +new Date(b.next_callback_at!)),
     [leads, now],
   );
-  const unassignedLeads = React.useMemo(
-    () => leads.filter((l) => !l.owner_id && !["Dead", "Not Interested"].includes(l.status)),
-    [leads],
-  );
-
   const qualified = qualifiedLeads.length;
   const inDiscussion = inDiscussionLeads.length;
   const hot = hotLeads.length;
   const overdueCallbacks = overdueCallbackLeads.length;
   const overdueTasks = tasks.filter((t) => !t.done && t.due_at && new Date(t.due_at) < now).length;
   const pendingUpdates = updateRequests.filter((u) => u.status === "pending").length;
-  const unassigned = unassignedLeads.length;
 
   // Drill-down dialog state — Connect rate and Agents/Overdue tasks are intentionally not in here.
-  type DetailKey = "calls" | "qualified" | "discussion" | "hot" | "overdueCallbacks" | "unassigned";
+  type DetailKey = "calls" | "qualified" | "discussion" | "hot" | "overdueCallbacks";
   const [detail, setDetail] = React.useState<DetailKey | null>(null);
 
   const agentStats = agents.map((a) => {
@@ -112,16 +106,19 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2 sm:gap-3">
-        <KPI label="Agents"        value={agents.length} icon={Users}                          href="/admin/users" />
-        <KPI label="Calls today"   value={callsToday}    icon={Phone}                          onClick={() => setDetail("calls")} />
-        <KPI label="Connect rate"  value={`${connectRate}%`} icon={TrendingUp} accent="emerald" sub="last 7d" />
-        <KPI label="Qualified"     value={qualified}     icon={Star}     accent="emerald"      onClick={() => setDetail("qualified")} />
-        <KPI label="In Discussion" value={inDiscussion}  icon={MessageSquare} accent="emerald" onClick={() => setDetail("discussion")} />
-        <KPI label="Hot pipeline"  value={hot}           icon={Flame}    accent="red"          onClick={() => setDetail("hot")} />
-        <KPI label="Overdue tasks" value={overdueTasks}  icon={AlertTriangle} accent="amber"   href="/tasks" />
-        <KPI label="Overdue calls" value={overdueCallbacks} icon={AlertTriangle} accent="amber" onClick={() => setDetail("overdueCallbacks")} />
-        <KPI label="Unassigned"    value={unassigned}    icon={UserPlus} accent="rose"         onClick={() => setDetail("unassigned")} />
+      {/* 8 KPIs in a single line. On small screens the row scrolls horizontally
+          so the cards don't stack and the headline read stays compact. */}
+      <div className="-mx-3 sm:-mx-4 lg:mx-0 px-3 sm:px-4 lg:px-0 overflow-x-auto lg:overflow-visible">
+        <div className="flex lg:grid lg:grid-cols-8 gap-2 sm:gap-3 min-w-max lg:min-w-0 pb-1 lg:pb-0">
+          <KPI label="Agents"        value={agents.length} icon={Users}                          href="/admin/users" />
+          <KPI label="Calls today"   value={callsToday}    icon={Phone}                          onClick={() => setDetail("calls")} />
+          <KPI label="Connect rate"  value={`${connectRate}%`} icon={TrendingUp} accent="emerald" sub="last 7d" />
+          <KPI label="Qualified"     value={qualified}     icon={Star}     accent="emerald"      onClick={() => setDetail("qualified")} />
+          <KPI label="In Discussion" value={inDiscussion}  icon={MessageSquare} accent="emerald" onClick={() => setDetail("discussion")} />
+          <KPI label="Hot pipeline"  value={hot}           icon={Flame}    accent="red"          onClick={() => setDetail("hot")} />
+          <KPI label="Overdue tasks" value={overdueTasks}  icon={AlertTriangle} accent="amber"   href="/tasks" />
+          <KPI label="Overdue calls" value={overdueCallbacks} icon={AlertTriangle} accent="amber" onClick={() => setDetail("overdueCallbacks")} />
+        </div>
       </div>
 
       <LeadDetailDialog
@@ -185,19 +182,6 @@ export default function AdminDashboardPage() {
         users={users}
         showOwner
       />
-      <LeadDetailDialog
-        open={detail === "unassigned"}
-        onOpenChange={(o) => !o && setDetail(null)}
-        title="Unassigned leads"
-        subtitle={`${unassignedLeads.length} lead${unassignedLeads.length === 1 ? "" : "s"} without an owner. Push to an agent or claim them.`}
-        icon={<UserPlus className="h-5 w-5 text-rose-600" />}
-        mode="leads"
-        leads={unassignedLeads}
-        allLeads={leads}
-        users={users}
-        showOwner
-      />
-
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -375,33 +359,33 @@ function KPI({
   const interactive = !!(onClick || href);
   const body = (
     <Card className={cn(
-      "p-3 transition-all duration-base ease-ios h-full",
+      "p-2.5 transition-all duration-base ease-ios h-full",
       interactive ? "group hover:border-primary/40 hover:shadow-elevation-3 cursor-pointer" : "",
     )}>
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={cn("h-7 w-7 rounded-md flex items-center justify-center", accent ? accentMap[accent] : "text-primary bg-primary/10")}>
-          <Icon className="h-4 w-4" />
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="text-[11px] text-muted-foreground truncate">{label}</div>
+        <div className={cn("h-6 w-6 shrink-0 rounded-md flex items-center justify-center", accent ? accentMap[accent] : "text-primary bg-primary/10")}>
+          <Icon className="h-3.5 w-3.5" />
         </div>
       </div>
-      <div className="text-2xl font-bold mt-1 tabular-nums">{value}</div>
-      <div className="text-[11px] text-muted-foreground flex items-center justify-between mt-0.5">
-        <span>{sub ?? " "}</span>
-        {interactive && <ArrowRight className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />}
+      <div className="text-xl font-bold mt-0.5 tabular-nums leading-tight">{value}</div>
+      <div className="text-[10px] text-muted-foreground flex items-center justify-between mt-0.5 min-h-[14px]">
+        <span className="truncate">{sub ?? ""}</span>
+        {interactive && <ArrowRight className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />}
       </div>
     </Card>
   );
   if (href) {
-    return <Link href={href} aria-label={`Open ${label}`} className="block">{body}</Link>;
+    return <Link href={href} aria-label={`Open ${label}`} className="block w-[140px] lg:w-auto shrink-0">{body}</Link>;
   }
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-label={`View ${label} details`} className="w-full text-left">
+      <button type="button" onClick={onClick} aria-label={`View ${label} details`} className="block w-[140px] lg:w-auto shrink-0 text-left">
         {body}
       </button>
     );
   }
-  return body;
+  return <div className="block w-[140px] lg:w-auto shrink-0">{body}</div>;
 }
 
 function Stat({ label, value }: { label: string; value: any }) {
