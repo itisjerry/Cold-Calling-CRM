@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "caller";
+export type UserRole = "admin" | "agent";
 
 export type LeadStatus =
   | "New"
@@ -39,6 +39,17 @@ export type Disposition =
   | "Send Info"
   | "Not Interested"
   | "Wrong Number";
+
+export interface User {
+  id: string;
+  org_id: string;
+  full_name: string;
+  email: string;
+  avatar_color: string;
+  role: UserRole;
+  active: boolean;
+  created_at: string;
+}
 
 export interface Profile {
   id: string;
@@ -86,7 +97,7 @@ export interface LeadHistory {
   lead_id: string;
   org_id: string;
   by_user: string | null;
-  type: "call" | "note" | "status" | "stage" | "import";
+  type: "call" | "note" | "status" | "stage" | "import" | "assign";
   disposition: string | null;
   note: string | null;
   meta: Record<string, unknown>;
@@ -112,6 +123,7 @@ export interface Task {
   id: string;
   org_id: string;
   user_id: string | null;
+  assigned_by: string | null;
   title: string;
   description: string | null;
   due_at: string | null;
@@ -122,6 +134,113 @@ export interface Task {
   created_at: string;
 }
 
+export interface Reminder {
+  id: string;
+  org_id: string;
+  user_id: string;
+  created_by: string | null;
+  message: string;
+  fires_at: string;
+  lead_id: string | null;
+  project_id: string | null;
+  done: boolean;
+  created_at: string;
+}
+
+export interface UpdateRequest {
+  id: string;
+  org_id: string;
+  requester_id: string;
+  agent_id: string;
+  lead_id: string | null;
+  project_id: string | null;
+  question: string;
+  reply: string | null;
+  status: "pending" | "answered" | "acknowledged";
+  due_at: string | null;
+  answered_at: string | null;
+  created_at: string;
+}
+
+export type NotificationKind =
+  | "lead_assigned"
+  | "task_assigned"
+  | "reminder"
+  | "update_request"
+  | "update_reply"
+  | "system";
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  org_id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  org_id: string;
+  actor_id: string | null;
+  kind: string;
+  target_table: string | null;
+  target_id: string | null;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface SavedView {
+  id: string;
+  org_id: string;
+  user_id: string;
+  scope: "leads" | "tasks" | "projects" | "activity" | "reports";
+  name: string;
+  query: ViewQuery;
+  shared: boolean;
+  created_at: string;
+}
+
+export type DateRangePreset =
+  | "today"
+  | "yesterday"
+  | "last_7_days"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "this_quarter"
+  | "last_30_days"
+  | "all_time"
+  | "custom";
+
+export interface DateRange {
+  preset: DateRangePreset;
+  start?: string;
+  end?: string;
+}
+
+export interface ViewQuery {
+  dateRange?: DateRange;
+  filters?: Record<string, unknown>;
+  sort?: { field: string; dir: "asc" | "desc" };
+  groupBy?: string | null;
+}
+
+export interface OrgBranding {
+  logoDataUrl?: string | null;
+  org_name?: string;
+  primary_color?: string;
+  accent_color?: string;
+  ink_color?: string;
+  footer_text?: string;
+  signature_name?: string;
+  signature_title?: string;
+}
+
 export interface OrgSettings {
   org_id: string;
   call_window_start: number;
@@ -130,6 +249,9 @@ export interface OrgSettings {
   revival_attempts: number;
   old_days: number;
   scoring: ScoringWeights;
+  branding?: OrgBranding;
+  dispositions?: string[];
+  pipeline_stages?: string[];
 }
 
 export interface ScoringWeights {

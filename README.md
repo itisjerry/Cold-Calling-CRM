@@ -2,6 +2,16 @@
 
 A state-of-the-art outbound calling CRM purpose-built for a web/design agency cold-calling team. Timezone-aware queue, one-click dispositions, smart follow-up rhythm, and a clean handoff from qualified lead to active project.
 
+## ✨ What's new — Admin/Agent + Branded Reports release
+
+- **Admin & Agent dual interface.** Switch users from the top-right picker. Admins get `/admin/*` (dashboard, users, all leads, all projects, activity feed, leaderboard, reports). Agents see only their own leads, tasks, reminders, and inbox.
+- **Push work to agents.** Admins can push leads (single or round-robin), assign tasks, send reminders, and request updates on any lead/project. Agents get notifications and an inbox banner.
+- **Branded PDF reports.** Flexible date range (Today, last 7/30 days, MTD, custom range, etc.). Eight templates — daily activity, weekly performance, monthly leadership, pipeline health, lead source ROI, agent scorecard, all-agents comparison, custom. Reports use the org branding from Settings → Branding (logo, colors, footer, signoff).
+- **Live leaderboards.** Today / week / month tabs with podium for top 3.
+- **Flexible views.** Date-range chip on Leads, Activity, Leaderboard; per-owner scope; saved filter state.
+- **Per-agent drill-in.** Click any agent in Users to see their full scorecard, leads, history, tasks, reminders, and update requests — plus "Generate PDF" deep-link to the report builder.
+- **Settings → Customize.** Edit dispositions and pipeline stages per org.
+
 ## ⚡ Quick start (5 minutes)
 
 ```bash

@@ -1,8 +1,16 @@
-import type { Lead, LeadHistory, Project, Task } from "@/types";
+import type { Lead, LeadHistory, Project, Task, User } from "@/types";
 import { resolveTimezone } from "./timezones";
 import { normalizePhone } from "./utils";
 
 const DEMO_ORG = "demo";
+
+export const SAMPLE_USERS: User[] = [
+  { id: "user-admin", org_id: DEMO_ORG, full_name: "Yahya Malik",   email: "yahya@pixelarchitecture.co", avatar_color: "#6366f1", role: "admin", active: true, created_at: new Date(Date.now() - 90 * 86400000).toISOString() },
+  { id: "user-sara",  org_id: DEMO_ORG, full_name: "Sara Iqbal",    email: "sara@pixelarchitecture.co",  avatar_color: "#ec4899", role: "agent", active: true, created_at: new Date(Date.now() - 60 * 86400000).toISOString() },
+  { id: "user-omar",  org_id: DEMO_ORG, full_name: "Omar Sheikh",   email: "omar@pixelarchitecture.co",  avatar_color: "#10b981", role: "agent", active: true, created_at: new Date(Date.now() - 45 * 86400000).toISOString() },
+  { id: "user-aisha", org_id: DEMO_ORG, full_name: "Aisha Khan",    email: "aisha@pixelarchitecture.co", avatar_color: "#f59e0b", role: "agent", active: true, created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
+  { id: "user-bilal", org_id: DEMO_ORG, full_name: "Bilal Ahmed",   email: "bilal@pixelarchitecture.co", avatar_color: "#0ea5e9", role: "agent", active: true, created_at: new Date(Date.now() - 14 * 86400000).toISOString() },
+];
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
 const hoursAgo = (n: number) => new Date(Date.now() - n * 3600000).toISOString();
 
@@ -123,9 +131,9 @@ export const SAMPLE_PROJECTS: Project[] = [
 ];
 
 export const SAMPLE_TASKS: Task[] = [
-  { id: "task-1", org_id: DEMO_ORG, user_id: null, title: "Send proposal to Marcus Chen", description: null, due_at: new Date(Date.now() + 86400000).toISOString(), priority: "high", lead_id: "seed-1", project_id: null, done: false, created_at: new Date().toISOString() },
-  { id: "task-2", org_id: DEMO_ORG, user_id: null, title: "Prep demo for Verdant Wellness", description: null, due_at: new Date(Date.now() + 2 * 86400000).toISOString(), priority: "high", lead_id: "seed-4", project_id: null, done: false, created_at: new Date().toISOString() },
-  { id: "task-3", org_id: DEMO_ORG, user_id: null, title: "Follow up Sofia Rossi (Tue)", description: null, due_at: new Date(Date.now() + 3 * 86400000).toISOString(), priority: "medium", lead_id: "seed-6", project_id: null, done: false, created_at: new Date().toISOString() },
-  { id: "task-4", org_id: DEMO_ORG, user_id: null, title: "Update CRM after morning calls", description: null, due_at: new Date(Date.now() - 86400000).toISOString(), priority: "low", lead_id: null, project_id: null, done: false, created_at: new Date().toISOString() },
-  { id: "task-5", org_id: DEMO_ORG, user_id: null, title: "Review weekly analytics", description: null, due_at: new Date().toISOString(), priority: "medium", lead_id: null, project_id: null, done: false, created_at: new Date().toISOString() },
+  { id: "task-1", org_id: DEMO_ORG, user_id: null, assigned_by: null, title: "Send proposal to Marcus Chen", description: null, due_at: new Date(Date.now() + 86400000).toISOString(), priority: "high", lead_id: "seed-1", project_id: null, done: false, created_at: new Date().toISOString() },
+  { id: "task-2", org_id: DEMO_ORG, user_id: null, assigned_by: null, title: "Prep demo for Verdant Wellness", description: null, due_at: new Date(Date.now() + 2 * 86400000).toISOString(), priority: "high", lead_id: "seed-4", project_id: null, done: false, created_at: new Date().toISOString() },
+  { id: "task-3", org_id: DEMO_ORG, user_id: null, assigned_by: null, title: "Follow up Sofia Rossi (Tue)", description: null, due_at: new Date(Date.now() + 3 * 86400000).toISOString(), priority: "medium", lead_id: "seed-6", project_id: null, done: false, created_at: new Date().toISOString() },
+  { id: "task-4", org_id: DEMO_ORG, user_id: null, assigned_by: null, title: "Update CRM after morning calls", description: null, due_at: new Date(Date.now() - 86400000).toISOString(), priority: "low", lead_id: null, project_id: null, done: false, created_at: new Date().toISOString() },
+  { id: "task-5", org_id: DEMO_ORG, user_id: null, assigned_by: null, title: "Review weekly analytics", description: null, due_at: new Date().toISOString(), priority: "medium", lead_id: null, project_id: null, done: false, created_at: new Date().toISOString() },
 ];

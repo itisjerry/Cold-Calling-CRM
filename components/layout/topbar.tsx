@@ -1,15 +1,15 @@
 "use client";
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Search, Plus, Moon, Sun, Phone, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CommandPalette } from "./command-palette";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
+import { NotificationBell } from "./notification-bell";
+import { UserSwitcher } from "./user-switcher";
 
 export function Topbar() {
   const router = useRouter();
@@ -58,12 +58,14 @@ export function Topbar() {
           <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} className="hidden sm:inline-flex">
             <Plus className="h-4 w-4 mr-1" /> Quick add
           </Button>
-          <Button size="sm" onClick={() => router.push("/call-mode")} className="bg-gradient-to-r from-primary to-indigo-500 hover:opacity-90">
+          <Button size="sm" onClick={() => router.push("/call-mode")} className="hidden md:inline-flex bg-gradient-to-r from-primary to-indigo-500 hover:opacity-90">
             <Phone className="h-4 w-4 mr-1.5" /> Start Calling
           </Button>
+          <NotificationBell />
           <Button variant="ghost" size="icon" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
             {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          <UserSwitcher />
         </div>
       </header>
 

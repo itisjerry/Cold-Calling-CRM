@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { OnboardingBanner } from "@/components/layout/onboarding-banner";
+import { UpdateRequestBanner } from "@/components/agent/update-request-banner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
         <OnboardingBanner />
+        <UpdateRequestBanner />
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">{children}</div>
         </main>

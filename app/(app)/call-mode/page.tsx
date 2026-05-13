@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { useStore } from "@/lib/store";
+import { useStore, useIsAdmin, useCurrentUser } from "@/lib/store";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,22 +39,26 @@ export default function CallModePage() {
   const settings = useStore((s) => s.settings);
   const addHistory = useStore((s) => s.addHistory);
   const updateLead = useStore((s) => s.updateLead);
+  const isAdmin = useIsAdmin();
+  const me = useCurrentUser();
 
   const [filter, setFilter] = React.useState<"all" | "hot" | "callback" | "new">("all");
+  const [scope, setScope] = React.useState<"mine" | "all">(isAdmin ? "all" : "mine");
+  const [mobilePane, setMobilePane] = React.useState<"queue" | "lead" | "extras">("lead");
   const [currentId, setCurrentId] = React.useState<string | null>(null);
   const [quickOpen, setQuickOpen] = React.useState(false);
   const [note, setNote] = React.useState("");
 
   const queue = React.useMemo(() => {
     let xs = leads.filter((l) => !["Dead", "Not Interested"].includes(l.status));
+    if (scope === "mine" && me) xs = xs.filter((l) => l.owner_id === me.id);
     if (filter === "hot") xs = xs.filter((l) => l.temperature === "Hot");
     if (filter === "callback") xs = xs.filter((l) => !!l.next_callback_at);
     if (filter === "new") xs = xs.filter((l) => l.attempts === 0);
-    // Prefer in-window leads but show all
     const scored = xs.map((l) => ({ l, s: scoreLead(l, settings.scoring, settings.call_window_start, settings.call_window_end) }));
     scored.sort((a, b) => b.s - a.s);
     return scored.map((x) => x.l);
-  }, [leads, filter, settings]);
+  }, [leads, filter, settings, scope, me]);
 
   const current = currentId ? leads.find((l) => l.id === currentId) ?? null : null;
   const currentHistory = current ? history.filter((h) => h.lead_id === current.id).slice(0, 20) : [];
@@ -90,9 +94,40 @@ export default function CallModePage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-9rem)]">
+    <div className="space-y-4">
+      {/* Mobile pane switcher */}
+      <div className="lg:hidden flex items-center gap-2">
+        <div className="inline-flex rounded-md border p-0.5 bg-card">
+          {(["queue", "lead", "extras"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setMobilePane(p)}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded capitalize transition-colors",
+                mobilePane === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              )}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        {isAdmin && (
+          <select
+            className="ml-auto rounded-md border bg-background px-2 py-1 text-xs"
+            value={scope}
+            onChange={(e) => setScope(e.target.value as any)}
+          >
+            <option value="mine">My queue</option>
+            <option value="all">All leads</option>
+          </select>
+        )}
+      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100vh-9rem)]">
       {/* Queue */}
-      <Card className="lg:col-span-3 flex flex-col overflow-hidden">
+      <Card className={cn(
+        "lg:col-span-3 lg:flex lg:flex-col overflow-hidden",
+        mobilePane === "queue" ? "flex flex-col h-[70vh]" : "hidden lg:flex"
+      )}>
         <CardHeader className="pb-3 border-b shrink-0">
           <CardTitle className="text-sm flex items-center justify-between">
             <span>Today's Queue</span>
@@ -146,7 +181,10 @@ export default function CallModePage() {
       </Card>
 
       {/* Current Lead */}
-      <Card className="lg:col-span-5 flex flex-col overflow-hidden">
+      <Card className={cn(
+        "lg:col-span-5 lg:flex lg:flex-col overflow-hidden",
+        mobilePane === "lead" ? "flex flex-col" : "hidden lg:flex"
+      )}>
         {!current ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <Phone className="h-12 w-12 text-muted-foreground/40 mb-4" />
@@ -203,7 +241,10 @@ export default function CallModePage() {
       </Card>
 
       {/* Side: tabs */}
-      <Card className="lg:col-span-4 flex flex-col overflow-hidden">
+      <Card className={cn(
+        "lg:col-span-4 lg:flex lg:flex-col overflow-hidden",
+        mobilePane === "extras" ? "flex flex-col h-[70vh]" : "hidden lg:flex"
+      )}>
         {!current ? <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Pick a lead first</div> : (
           <Tabs defaultValue="history" className="flex flex-col h-full">
             <TabsList className="m-3 mb-0 grid grid-cols-3">
@@ -259,6 +300,7 @@ export default function CallModePage() {
       </Card>
 
       <QuickLogModal open={quickOpen} onOpenChange={setQuickOpen} lead={current} />
+    </div>
     </div>
   );
 }
