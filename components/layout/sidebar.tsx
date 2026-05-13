@@ -2,6 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, LayoutGroup } from "framer-motion";
 import {
   LayoutDashboard, Phone, Users, RotateCcw, GitBranch, Briefcase,
   CheckSquare, Calendar, BarChart3, Upload, Settings, Sparkles,
@@ -9,7 +10,6 @@ import {
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import { useStore, useCurrentUser, useIsAdmin } from "@/lib/store";
-import { scoreLead } from "@/lib/scoring";
 import { callWindowState } from "@/lib/timezones";
 
 const AGENT_NAV = [
@@ -108,70 +108,84 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r bg-card/40">
-      <div className="flex h-14 items-center gap-2 px-5 border-b">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-cold text-primary-foreground font-bold">H</div>
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur-xl">
+      <div className="flex h-14 items-center gap-2 px-5 border-b border-border/60">
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-cold text-primary-foreground font-bold shadow-elevation-2 shadow-inner-hl">
+          <span className="relative z-10">H</span>
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+        </div>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold leading-none">Helio</span>
-          <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
+          <span className="font-display text-sm font-semibold leading-none tracking-tight">Helio</span>
+          <span className="text-[10px] text-muted-foreground leading-none mt-1">
             {isAdmin ? "Admin Console" : "Calling Command Center"}
           </span>
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {nav.map((sec) => (
-          <div key={sec.section}>
-            <div className="px-2 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{sec.section}</div>
-            <div className="space-y-0.5">
-              {sec.items.map((item: any) => {
-                const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"));
-                const exactActive = pathname === item.href;
-                const Icon = item.icon;
-                const liveBadge = item.live && liveCount > 0;
-                const count = badgeFor(item.badge);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                      (active || exactActive)
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="flex-1">{item.label}</span>
-                    {liveBadge && (
-                      <span className="inline-flex items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-semibold h-5 min-w-[1.25rem] px-1.5">
-                        {liveCount}
-                      </span>
-                    )}
-                    {count > 0 && (
-                      <span className="inline-flex items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 text-[10px] font-mono font-semibold h-5 min-w-[1.25rem] px-1.5">
-                        {count}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+      <LayoutGroup id="sidebar-nav">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+          {nav.map((sec) => (
+            <div key={sec.section}>
+              <div className="px-2 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">{sec.section}</div>
+              <div className="space-y-0.5">
+                {sec.items.map((item: any) => {
+                  const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"));
+                  const Icon = item.icon;
+                  const liveBadge = item.live && liveCount > 0;
+                  const count = badgeFor(item.badge);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-base ease-ios",
+                        active
+                          ? "text-primary font-medium"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {active && (
+                        <motion.div
+                          layoutId="sidebar-active-pill"
+                          className="absolute inset-0 rounded-md bg-primary/10 shadow-inner-hl"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      {!active && (
+                        <span className="absolute inset-0 rounded-md bg-transparent group-hover:bg-accent transition-colors duration-base" />
+                      )}
+                      <Icon className="relative h-4 w-4 shrink-0" />
+                      <span className="relative flex-1">{item.label}</span>
+                      {liveBadge && (
+                        <span className="relative inline-flex items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-semibold h-5 min-w-[1.25rem] px-1.5 tabular-nums">
+                          {liveCount}
+                        </span>
+                      )}
+                      {count > 0 && (
+                        <span className="relative inline-flex items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 text-[10px] font-mono font-semibold h-5 min-w-[1.25rem] px-1.5 tabular-nums">
+                          {count}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </nav>
+          ))}
+        </nav>
+      </LayoutGroup>
 
-      <div className="border-t p-3">
-        <div className="flex items-center gap-2 rounded-md p-2 hover:bg-accent">
+      <div className="border-t border-border/60 p-3">
+        <div className="flex items-center gap-2 rounded-md p-2 hover:bg-accent transition-colors duration-base">
           {currentUser ? (
             <span
-              className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold text-white"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-elevation-1 shadow-inner-hl"
               style={{ background: currentUser.avatar_color }}
             >
               {initials(currentUser.full_name)}
             </span>
           ) : (
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-cold" />
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-cold shadow-elevation-1" />
           )}
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium truncate">{currentUser?.full_name ?? "Guest"}</div>

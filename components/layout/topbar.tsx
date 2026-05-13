@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Search, Plus, Moon, Sun, Phone, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "./command-palette";
@@ -16,6 +17,15 @@ export function Topbar() {
   const { setTheme, resolvedTheme } = useTheme();
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
+
+  // Scroll-driven border + shadow on the glass topbar — only appears once you scroll.
+  const { scrollY } = useScroll();
+  const borderOpacity = useTransform(scrollY, [0, 8, 40], [0, 0.6, 1]);
+  const shadowBox = useTransform(
+    scrollY,
+    [0, 40],
+    ["0 0 0 hsl(0 0% 0% / 0)", "0 8px 24px -16px hsl(0 0% 0% / 0.18)"]
+  );
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -34,7 +44,16 @@ export function Topbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/80 backdrop-blur px-4 lg:px-6">
+      <motion.header
+        className="sticky top-0 z-30 flex h-14 items-center gap-3 px-4 lg:px-6 glass border-b-0"
+        style={{ boxShadow: shadowBox }}
+      >
+        {/* scroll-driven border bottom */}
+        <motion.div
+          className="absolute inset-x-0 bottom-0 h-px bg-border pointer-events-none"
+          style={{ opacity: borderOpacity }}
+        />
+
         {/* Mobile sidebar trigger */}
         <Sheet>
           <SheetTrigger asChild>
@@ -47,18 +66,22 @@ export function Topbar() {
 
         <button
           onClick={() => setCmdOpen(true)}
-          className="flex items-center gap-2 h-9 flex-1 max-w-md rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground hover:bg-muted/60 transition-colors"
+          className="flex items-center gap-2 h-9 flex-1 max-w-md rounded-md border border-input bg-background/40 px-3 text-sm text-muted-foreground shadow-elevation-1 hover:bg-background/70 hover:border-border transition-all duration-base ease-ios"
         >
           <Search className="h-4 w-4" />
           <span className="flex-1 text-left">Search leads, companies, anything…</span>
-          <kbd className="hidden sm:inline-flex items-center rounded border bg-background px-1.5 py-0.5 text-[10px] font-mono">⌘ K</kbd>
+          <kbd className="hidden sm:inline-flex items-center rounded border bg-background/80 px-1.5 py-0.5 text-[10px] font-mono">⌘ K</kbd>
         </button>
 
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} className="hidden sm:inline-flex">
             <Plus className="h-4 w-4 mr-1" /> Quick add
           </Button>
-          <Button size="sm" onClick={() => router.push("/call-mode")} className="hidden md:inline-flex bg-gradient-to-r from-primary to-indigo-500 hover:opacity-90">
+          <Button
+            size="sm"
+            onClick={() => router.push("/call-mode")}
+            className="hidden md:inline-flex bg-gradient-to-b from-primary/95 to-primary hover:brightness-[1.05]"
+          >
             <Phone className="h-4 w-4 mr-1.5" /> Start Calling
           </Button>
           <NotificationBell />
@@ -67,7 +90,7 @@ export function Topbar() {
           </Button>
           <UserSwitcher />
         </div>
-      </header>
+      </motion.header>
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
       <AddLeadDialog open={addOpen} onOpenChange={setAddOpen} />

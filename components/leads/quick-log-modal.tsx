@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { Lead, Disposition, LeadStatus, LeadTemp } from "@/types";
 import { toast } from "sonner";
 import { Check, Phone, PhoneMissed, PhoneOff, Voicemail, Clock, Star, Send, X, AlertTriangle } from "lucide-react";
+import { celebrate } from "@/components/motion/confetti";
 
 interface Props { open: boolean; onOpenChange: (o: boolean) => void; lead: Lead | null; }
 
@@ -64,7 +65,12 @@ export function QuickLogModal({ open, onOpenChange, lead }: Props) {
     if (callback) patch.next_callback_at = new Date(callback).toISOString();
     if (newTemp) patch.temperature = newTemp as LeadTemp;
     if (Object.keys(patch).length) updateLead(lead.id, patch);
-    toast.success(`Logged: ${selected}`, { description: lead.name });
+    if (selected === "Qualified") {
+      celebrate();
+      toast.success(`🎉 ${lead.name} qualified!`, { description: "Nice work — pipeline updated." });
+    } else {
+      toast.success(`Logged: ${selected}`, { description: lead.name });
+    }
     onOpenChange(false);
   };
 

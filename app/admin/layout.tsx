@@ -6,6 +6,8 @@ import { Topbar } from "@/components/layout/topbar";
 import { useIsAdmin, useCurrentUser } from "@/lib/store";
 import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageTransition } from "@/components/motion/page-transition";
+import { BottomTabs } from "@/components/layout/bottom-tabs";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = useIsAdmin();
@@ -57,10 +59,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">{children}</div>
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+          <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
       </div>
+      <BottomTabs />
     </div>
   );
 }

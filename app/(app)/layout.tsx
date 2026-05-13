@@ -2,6 +2,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { OnboardingBanner } from "@/components/layout/onboarding-banner";
 import { UpdateRequestBanner } from "@/components/agent/update-request-banner";
+import { PageTransition } from "@/components/motion/page-transition";
+import { BottomTabs } from "@/components/layout/bottom-tabs";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,10 +13,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Topbar />
         <OnboardingBanner />
         <UpdateRequestBanner />
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">{children}</div>
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+          <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
       </div>
+      <BottomTabs />
     </div>
   );
 }

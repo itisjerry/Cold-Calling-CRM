@@ -4,14 +4,17 @@
 
 @layer base {
   :root {
+    /* ── Surfaces ─────────────────────────────────────────────── */
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+
+    /* ── Brand (iOS system blue) ──────────────────────────────── */
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
@@ -19,65 +22,172 @@
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Lines & focus ────────────────────────────────────────── */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.6rem;
+    --ring: 211 100% 50%;
+    --radius: 0.75rem;
 
+    /* ── Semantic temperatures ────────────────────────────────── */
     --hot: 0 84% 60%;
     --warm: 38 92% 50%;
     --cold: 199 89% 48%;
     --success: 142 71% 45%;
+
+    /* ── Elevation (layered key + ambient, light) ─────────────── */
+    --elevation-1: 0 1px 2px -1px hsl(220 40% 12% / 0.06), 0 1px 1px hsl(220 40% 12% / 0.04);
+    --elevation-2: 0 2px 4px -2px hsl(220 40% 12% / 0.08), 0 4px 8px -4px hsl(220 40% 12% / 0.06);
+    --elevation-3: 0 4px 8px -3px hsl(220 40% 12% / 0.10), 0 12px 20px -8px hsl(220 40% 12% / 0.08);
+    --elevation-4: 0 8px 16px -6px hsl(220 40% 12% / 0.12), 0 24px 40px -12px hsl(220 40% 12% / 0.10);
+    --elevation-5: 0 16px 32px -8px hsl(220 40% 12% / 0.14), 0 40px 64px -16px hsl(220 40% 12% / 0.14);
+
+    /* ── Glass material ───────────────────────────────────────── */
+    --glass-tint: 0 0% 100% / 0.66;
+    --glass-tint-strong: 0 0% 100% / 0.82;
+    --glass-border: 220 30% 80% / 0.4;
+
+    /* ── Glow accents ─────────────────────────────────────────── */
+    --glow-primary: 211 100% 50% / 0.35;
+    --glow-success: 142 71% 45% / 0.32;
+    --glow-hot: 0 84% 60% / 0.32;
+
+    /* ── Motion ───────────────────────────────────────────────── */
+    --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
   }
 
   .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
+    --card: 222 47% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
+    --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 212 100% 60%;
+    --primary-foreground: 222 47% 6%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 70%;
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 41%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 224 76% 60%;
+    --border: 217 33% 24%;
+    --input: 217 33% 24%;
+    --ring: 212 100% 60%;
 
     --hot: 0 91% 71%;
     --warm: 43 96% 56%;
     --cold: 199 95% 65%;
     --success: 142 76% 56%;
+
+    /* Dark elevation: deeper, slightly tinted */
+    --elevation-1: 0 1px 2px -1px hsl(0 0% 0% / 0.40), 0 1px 1px hsl(0 0% 0% / 0.28);
+    --elevation-2: 0 2px 4px -2px hsl(0 0% 0% / 0.48), 0 4px 8px -4px hsl(0 0% 0% / 0.36);
+    --elevation-3: 0 4px 8px -3px hsl(0 0% 0% / 0.56), 0 12px 20px -8px hsl(0 0% 0% / 0.44);
+    --elevation-4: 0 8px 16px -6px hsl(0 0% 0% / 0.62), 0 24px 40px -12px hsl(0 0% 0% / 0.52);
+    --elevation-5: 0 16px 32px -8px hsl(0 0% 0% / 0.70), 0 40px 64px -16px hsl(0 0% 0% / 0.62);
+
+    --glass-tint: 222 47% 8% / 0.62;
+    --glass-tint-strong: 222 47% 8% / 0.84;
+    --glass-border: 217 33% 30% / 0.6;
+
+    --glow-primary: 212 100% 60% / 0.45;
+    --glow-success: 142 76% 56% / 0.40;
+    --glow-hot: 0 91% 71% / 0.40;
   }
 
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1, "ss01" 1;
   }
 
-  /* Scrollbars */
+  /* Display headings: tighter tracking & optical sizing */
+  h1, h2, h3, .font-display {
+    font-feature-settings: "ss01" 1, "cv11" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Tabular numerals for metrics / table cells */
+  .tabular-nums, .font-tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv11" 1;
+  }
+
+  /* Scrollbars — quiet, themed */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 8px;
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.45); }
+
+  /* Reduced motion: disable transforms/animations, keep opacity */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
+  /* Glass material — use on chrome (sidebar, topbar, modals, popovers, sheets) */
   .glass {
-    @apply backdrop-blur-md bg-background/60 border border-border;
+    background: hsl(var(--glass-tint));
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid hsl(var(--glass-border));
   }
+  .glass-strong {
+    background: hsl(var(--glass-tint-strong));
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  /* Gradient border (existing, kept) */
   .gradient-border {
     background: linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
       linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--cold) / 0.6)) border-box;
     border: 1px solid transparent;
+  }
+
+  /* Subtle 1.5% SVG noise — kills gradient banding on glass surfaces */
+  .bg-noise::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.015;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size: 160px 160px;
+  }
+
+  /* iOS-style focus ring with glow */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* 3D-press utility — combine with active state on buttons/cards */
+  .press {
+    transition: transform var(--duration-fast) var(--ease-ios), box-shadow var(--duration-fast) var(--ease-ios);
+  }
+  .press:active {
+    transform: translateY(1px) scale(0.985);
   }
 }

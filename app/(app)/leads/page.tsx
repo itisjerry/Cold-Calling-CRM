@@ -18,7 +18,10 @@ import { PushLeadDialog } from "@/components/admin/push-lead-dialog";
 import { resolveDateRange, withinRange } from "@/lib/date-range";
 import {
   Plus, Upload, Download, Search, Phone, Flame, Snowflake, Thermometer, UserPlus,
+  SlidersHorizontal, X as XIcon,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Segmented } from "@/components/ui/segmented";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import type { DateRange } from "@/types";
@@ -144,82 +147,154 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      <Card className="p-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, company, city, phone…" className="pl-9" />
-          </div>
-          <DateRangeChip value={range} onChange={setRange} />
-          <Select value={scope} onValueChange={(v) => setScope(v as Scope)}>
-            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mine">My leads</SelectItem>
-              {isAdmin && <SelectItem value="all">All leads</SelectItem>}
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {isAdmin && agentsList.map((a) => (
-                <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusF} onValueChange={setStatusF}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              {["New","Attempting","Connected","In Discussion","Follow-up","Qualified","Not Interested","Dead"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={tempF} onValueChange={setTempF}>
-            <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Temps</SelectItem>
-              <SelectItem value="Hot">Hot</SelectItem>
-              <SelectItem value="Warm">Warm</SelectItem>
-              <SelectItem value="Cold">Cold</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={ageF} onValueChange={setAgeF}>
-            <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any age</SelectItem>
-              <SelectItem value="new">New (≤3d)</SelectItem>
-              <SelectItem value="recent">Recent (≤14d)</SelectItem>
-              <SelectItem value="old">Old (&gt;30d)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={attF} onValueChange={setAttF}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any attempts</SelectItem>
-              <SelectItem value="0">No attempts</SelectItem>
-              <SelectItem value="1-3">1–3 attempts</SelectItem>
-              <SelectItem value="4+">4+ attempts</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={dispF} onValueChange={setDispF}>
-            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any last call</SelectItem>
-              <SelectItem value="Voicemail">Voicemail</SelectItem>
-              <SelectItem value="No Answer">Unanswered</SelectItem>
-              <SelectItem value="Busy">Busy</SelectItem>
-              <SelectItem value="Answered">Answered</SelectItem>
-              <SelectItem value="Callback Requested">Callback Requested</SelectItem>
-              <SelectItem value="Wrong Number">Wrong Number</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sort} onValueChange={setSort}>
-            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="score">Sort: Score</SelectItem>
-              <SelectItem value="created">Sort: Date Added</SelectItem>
-              <SelectItem value="lastContact">Sort: Last Contact</SelectItem>
-              <SelectItem value="attempts">Sort: Attempts</SelectItem>
-              <SelectItem value="name">Sort: Name A–Z</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
+      {(() => {
+        const advancedActive =
+          (statusF !== "all" ? 1 : 0) +
+          (tempF !== "all" ? 1 : 0) +
+          (ageF !== "all" ? 1 : 0) +
+          (attF !== "all" ? 1 : 0) +
+          (dispF !== "all" ? 1 : 0);
+
+        const scopeOptions: { value: Scope; label: string }[] = [
+          { value: "mine", label: "Mine" },
+          ...(isAdmin ? [{ value: "all" as Scope, label: "All" }] : []),
+          { value: "unassigned", label: "Unassigned" },
+        ];
+
+        return (
+          <Card className="p-3">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, company, city, phone…" className="pl-9" />
+              </div>
+
+              <Segmented<Scope> value={scope} onChange={(v) => setScope(v)} options={scopeOptions} id="leads-scope" />
+
+              <DateRangeChip value={range} onChange={setRange} />
+
+              {isAdmin && (
+                <Select
+                  value={["mine","all","unassigned"].includes(scope) ? "_picker" : scope}
+                  onValueChange={(v) => { if (v !== "_picker") setScope(v as Scope); }}
+                >
+                  <SelectTrigger className="w-[170px]">
+                    <SelectValue placeholder="Specific agent…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_picker" disabled>Specific agent…</SelectItem>
+                    {agentsList.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Filters
+                    {advancedActive > 0 && (
+                      <Badge className="ml-1 h-5 min-w-[20px] justify-center px-1.5 text-[10px] tabular-nums">{advancedActive}</Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-[280px] space-y-3 p-4">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Status</div>
+                    <Select value={statusF} onValueChange={setStatusF}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        {["New","Attempting","Connected","In Discussion","Follow-up","Qualified","Not Interested","Dead"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Temperature</div>
+                    <Select value={tempF} onValueChange={setTempF}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Temps</SelectItem>
+                        <SelectItem value="Hot">Hot</SelectItem>
+                        <SelectItem value="Warm">Warm</SelectItem>
+                        <SelectItem value="Cold">Cold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Age</div>
+                    <Select value={ageF} onValueChange={setAgeF}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Any age</SelectItem>
+                        <SelectItem value="new">New (≤3d)</SelectItem>
+                        <SelectItem value="recent">Recent (≤14d)</SelectItem>
+                        <SelectItem value="old">Old (&gt;30d)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Attempts</div>
+                    <Select value={attF} onValueChange={setAttF}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Any attempts</SelectItem>
+                        <SelectItem value="0">No attempts</SelectItem>
+                        <SelectItem value="1-3">1–3 attempts</SelectItem>
+                        <SelectItem value="4+">4+ attempts</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Last call</div>
+                    <Select value={dispF} onValueChange={setDispF}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Any last call</SelectItem>
+                        <SelectItem value="Voicemail">Voicemail</SelectItem>
+                        <SelectItem value="No Answer">Unanswered</SelectItem>
+                        <SelectItem value="Busy">Busy</SelectItem>
+                        <SelectItem value="Answered">Answered</SelectItem>
+                        <SelectItem value="Callback Requested">Callback Requested</SelectItem>
+                        <SelectItem value="Wrong Number">Wrong Number</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {advancedActive > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full" onClick={() => { setStatusF("all"); setTempF("all"); setAgeF("all"); setAttF("all"); setDispF("all"); }}>
+                      Clear filters
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="score">Sort: Score</SelectItem>
+                  <SelectItem value="created">Sort: Date Added</SelectItem>
+                  <SelectItem value="lastContact">Sort: Last Contact</SelectItem>
+                  <SelectItem value="attempts">Sort: Attempts</SelectItem>
+                  <SelectItem value="name">Sort: Name A–Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Active filter chips */}
+            {advancedActive > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/60">
+                {statusF !== "all" && <FilterChip label={`Status: ${statusF}`} onClear={() => setStatusF("all")} />}
+                {tempF !== "all"   && <FilterChip label={`Temp: ${tempF}`}     onClear={() => setTempF("all")} />}
+                {ageF !== "all"    && <FilterChip label={`Age: ${ageF === "new" ? "≤3d" : ageF === "recent" ? "≤14d" : ">30d"}`} onClear={() => setAgeF("all")} />}
+                {attF !== "all"    && <FilterChip label={`Attempts: ${attF}`}  onClear={() => setAttF("all")} />}
+                {dispF !== "all"   && <FilterChip label={`Last: ${dispF}`}     onClear={() => setDispF("all")} />}
+              </div>
+            )}
+          </Card>
+        );
+      })()}
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -316,5 +391,17 @@ export default function LeadsPage() {
       <QuickLogModal open={!!quickLead} onOpenChange={(o) => !o && setQuickLead(null)} lead={quickLead} />
       <PushLeadDialog open={pushOpen} onOpenChange={setPushOpen} leadIds={[...selected]} />
     </div>
+  );
+}
+
+function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <button
+      onClick={onClear}
+      className="group inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium hover:bg-primary/15 transition-colors duration-base"
+    >
+      {label}
+      <XIcon className="h-3 w-3 opacity-60 group-hover:opacity-100" />
+    </button>
   );
 }
