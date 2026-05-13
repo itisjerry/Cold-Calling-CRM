@@ -104,12 +104,12 @@ export default function TasksPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Everything you owe yourself or a lead.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Tasks</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Everything you owe yourself or a lead.</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap w-full sm:w-auto">
           <Select value={scope} onValueChange={(v) => setScope(v)}>
-            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="mine">My tasks</SelectItem>
               {isAdmin && <SelectItem value="all">All tasks</SelectItem>}
@@ -125,7 +125,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center justify-between">Overdue<span className="text-xs font-mono text-red-600">{overdue.length}</span></CardTitle></CardHeader>
           <div className="p-2 pt-0 max-h-[500px] overflow-y-auto">

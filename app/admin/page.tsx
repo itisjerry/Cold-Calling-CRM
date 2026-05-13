@@ -8,12 +8,13 @@ import { useStore, useAgents } from "@/lib/store";
 import { cn, initials, relativeTime } from "@/lib/utils";
 import {
   Users, Phone, TrendingUp, Star, Flame, AlertTriangle,
-  UserPlus, CheckSquare, Bell, MessageCircleQuestion, ArrowRight, Activity, Trophy,
+  UserPlus, CheckSquare, Bell, MessageCircleQuestion, ArrowRight, Activity, Trophy, MessageSquare,
 } from "lucide-react";
 import { PushLeadDialog } from "@/components/admin/push-lead-dialog";
 import { AssignTaskDialog } from "@/components/admin/assign-task-dialog";
 import { SendReminderDialog } from "@/components/admin/send-reminder-dialog";
 import { RequestUpdateDialog } from "@/components/admin/request-update-dialog";
+import { LeadDetailDialog } from "@/components/dashboard/lead-detail-dialog";
 
 export default function AdminDashboardPage() {
   const agents = useAgents();
@@ -31,19 +32,52 @@ export default function AdminDashboardPage() {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const callsToday = history.filter((h) => h.type === "call" && new Date(h.created_at) >= today).length;
+
+  // Today's call history list — used both for the count and the drill-down.
+  const todaysCalls = React.useMemo(
+    () =>
+      history
+        .filter((h) => h.type === "call" && new Date(h.created_at) >= today)
+        .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)),
+    [history, today],
+  );
+  const callsToday = todaysCalls.length;
 
   const sevenDays = new Date(Date.now() - 7 * 86400000);
   const recentCalls = history.filter((h) => h.type === "call" && new Date(h.created_at) >= sevenDays);
   const connects = recentCalls.filter((h) => h.disposition === "Answered" || h.disposition === "Qualified").length;
   const connectRate = recentCalls.length > 0 ? Math.round((connects / recentCalls.length) * 100) : 0;
 
-  const qualified = leads.filter((l) => l.status === "Qualified").length;
-  const hot = leads.filter((l) => l.temperature === "Hot" && !["Qualified", "Dead", "Not Interested"].includes(l.status)).length;
-  const overdueCallbacks = leads.filter((l) => l.next_callback_at && new Date(l.next_callback_at) < now).length;
+  // Lead buckets behind each KPI — kept as memoized arrays so the dialog can render them.
+  const qualifiedLeads = React.useMemo(() => leads.filter((l) => l.status === "Qualified"), [leads]);
+  const inDiscussionLeads = React.useMemo(() => leads.filter((l) => l.status === "In Discussion"), [leads]);
+  const hotLeads = React.useMemo(
+    () => leads.filter((l) => l.temperature === "Hot" && !["Qualified", "Dead", "Not Interested"].includes(l.status)),
+    [leads],
+  );
+  const overdueCallbackLeads = React.useMemo(
+    () =>
+      leads
+        .filter((l) => l.next_callback_at && new Date(l.next_callback_at) < now)
+        .sort((a, b) => +new Date(a.next_callback_at!) - +new Date(b.next_callback_at!)),
+    [leads, now],
+  );
+  const unassignedLeads = React.useMemo(
+    () => leads.filter((l) => !l.owner_id && !["Dead", "Not Interested"].includes(l.status)),
+    [leads],
+  );
+
+  const qualified = qualifiedLeads.length;
+  const inDiscussion = inDiscussionLeads.length;
+  const hot = hotLeads.length;
+  const overdueCallbacks = overdueCallbackLeads.length;
   const overdueTasks = tasks.filter((t) => !t.done && t.due_at && new Date(t.due_at) < now).length;
   const pendingUpdates = updateRequests.filter((u) => u.status === "pending").length;
-  const unassigned = leads.filter((l) => !l.owner_id && !["Dead", "Not Interested"].includes(l.status)).length;
+  const unassigned = unassignedLeads.length;
+
+  // Drill-down dialog state — Connect rate and Agents/Overdue tasks are intentionally not in here.
+  type DetailKey = "calls" | "qualified" | "discussion" | "hot" | "overdueCallbacks" | "unassigned";
+  const [detail, setDetail] = React.useState<DetailKey | null>(null);
 
   const agentStats = agents.map((a) => {
     const myLeads = leads.filter((l) => l.owner_id === a.id);
@@ -64,30 +98,105 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Admin command center</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Admin command center</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {agents.length} agents · {leads.length} leads · {pendingUpdates} pending update{pendingUpdates !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPushOpen(true)}><UserPlus className="h-4 w-4 mr-1.5" /> Push lead</Button>
-          <Button variant="outline" size="sm" onClick={() => setTaskOpen(true)}><CheckSquare className="h-4 w-4 mr-1.5" /> Assign task</Button>
-          <Button variant="outline" size="sm" onClick={() => setRemOpen(true)}><Bell className="h-4 w-4 mr-1.5" /> Send reminder</Button>
-          <Button variant="outline" size="sm" onClick={() => setReqOpen(true)}><MessageCircleQuestion className="h-4 w-4 mr-1.5" /> Request update</Button>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={() => setPushOpen(true)}><UserPlus className="h-4 w-4 mr-1.5" /> <span className="truncate">Push lead</span></Button>
+          <Button variant="outline" size="sm" onClick={() => setTaskOpen(true)}><CheckSquare className="h-4 w-4 mr-1.5" /> <span className="truncate">Assign task</span></Button>
+          <Button variant="outline" size="sm" onClick={() => setRemOpen(true)}><Bell className="h-4 w-4 mr-1.5" /> <span className="truncate">Send reminder</span></Button>
+          <Button variant="outline" size="sm" onClick={() => setReqOpen(true)}><MessageCircleQuestion className="h-4 w-4 mr-1.5" /> <span className="truncate">Request update</span></Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-        <KPI label="Agents" value={agents.length} icon={Users} />
-        <KPI label="Calls today" value={callsToday} icon={Phone} />
-        <KPI label="Connect rate" value={`${connectRate}%`} icon={TrendingUp} accent="emerald" sub="last 7d" />
-        <KPI label="Qualified" value={qualified} icon={Star} accent="emerald" />
-        <KPI label="Hot pipeline" value={hot} icon={Flame} accent="red" />
-        <KPI label="Overdue tasks" value={overdueTasks} icon={AlertTriangle} accent="amber" />
-        <KPI label="Overdue calls" value={overdueCallbacks} icon={AlertTriangle} accent="amber" />
-        <KPI label="Unassigned" value={unassigned} icon={UserPlus} accent="rose" />
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2 sm:gap-3">
+        <KPI label="Agents"        value={agents.length} icon={Users}                          href="/admin/users" />
+        <KPI label="Calls today"   value={callsToday}    icon={Phone}                          onClick={() => setDetail("calls")} />
+        <KPI label="Connect rate"  value={`${connectRate}%`} icon={TrendingUp} accent="emerald" sub="last 7d" />
+        <KPI label="Qualified"     value={qualified}     icon={Star}     accent="emerald"      onClick={() => setDetail("qualified")} />
+        <KPI label="In Discussion" value={inDiscussion}  icon={MessageSquare} accent="emerald" onClick={() => setDetail("discussion")} />
+        <KPI label="Hot pipeline"  value={hot}           icon={Flame}    accent="red"          onClick={() => setDetail("hot")} />
+        <KPI label="Overdue tasks" value={overdueTasks}  icon={AlertTriangle} accent="amber"   href="/tasks" />
+        <KPI label="Overdue calls" value={overdueCallbacks} icon={AlertTriangle} accent="amber" onClick={() => setDetail("overdueCallbacks")} />
+        <KPI label="Unassigned"    value={unassigned}    icon={UserPlus} accent="rose"         onClick={() => setDetail("unassigned")} />
       </div>
+
+      <LeadDetailDialog
+        open={detail === "calls"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Calls today (team)"
+        subtitle={`${todaysCalls.length} attempt${todaysCalls.length === 1 ? "" : "s"} logged today across the team.`}
+        icon={<Phone className="h-5 w-5 text-primary" />}
+        mode="calls"
+        calls={todaysCalls}
+        allLeads={leads}
+        users={users}
+        showOwner
+        emptyMessage="No calls logged today yet."
+      />
+      <LeadDetailDialog
+        open={detail === "qualified"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Qualified leads"
+        subtitle={`${qualifiedLeads.length} lead${qualifiedLeads.length === 1 ? "" : "s"} marked qualified across the team.`}
+        icon={<Star className="h-5 w-5 text-emerald-600" />}
+        mode="leads"
+        leads={qualifiedLeads}
+        allLeads={leads}
+        users={users}
+        showOwner
+      />
+      <LeadDetailDialog
+        open={detail === "discussion"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="In Discussion"
+        subtitle={`${inDiscussionLeads.length} active conversation${inDiscussionLeads.length === 1 ? "" : "s"} across the team.`}
+        icon={<MessageSquare className="h-5 w-5 text-emerald-600" />}
+        mode="leads"
+        leads={inDiscussionLeads}
+        allLeads={leads}
+        users={users}
+        showOwner
+      />
+      <LeadDetailDialog
+        open={detail === "hot"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Hot pipeline"
+        subtitle={`${hotLeads.length} hot lead${hotLeads.length === 1 ? "" : "s"} still need action.`}
+        icon={<Flame className="h-5 w-5 text-red-500" />}
+        mode="leads"
+        leads={hotLeads}
+        allLeads={leads}
+        users={users}
+        showOwner
+      />
+      <LeadDetailDialog
+        open={detail === "overdueCallbacks"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Overdue callbacks"
+        subtitle={`${overdueCallbackLeads.length} lead${overdueCallbackLeads.length === 1 ? "" : "s"} have a callback time that's already passed.`}
+        icon={<AlertTriangle className="h-5 w-5 text-amber-500" />}
+        mode="leads"
+        leads={overdueCallbackLeads}
+        allLeads={leads}
+        users={users}
+        showOwner
+      />
+      <LeadDetailDialog
+        open={detail === "unassigned"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Unassigned leads"
+        subtitle={`${unassignedLeads.length} lead${unassignedLeads.length === 1 ? "" : "s"} without an owner. Push to an agent or claim them.`}
+        icon={<UserPlus className="h-5 w-5 text-rose-600" />}
+        mode="leads"
+        leads={unassignedLeads}
+        allLeads={leads}
+        users={users}
+        showOwner
+      />
 
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
@@ -246,25 +355,53 @@ export default function AdminDashboardPage() {
   );
 }
 
-function KPI({ label, value, sub, icon: Icon, accent }: { label: string; value: any; sub?: string; icon: any; accent?: string }) {
+function KPI({
+  label, value, sub, icon: Icon, accent, onClick, href,
+}: {
+  label: string;
+  value: any;
+  sub?: string;
+  icon: any;
+  accent?: string;
+  onClick?: () => void;
+  href?: string;
+}) {
   const accentMap: Record<string, string> = {
     emerald: "text-emerald-600 bg-emerald-500/10",
     red:     "text-red-600 bg-red-500/10",
     amber:   "text-amber-600 bg-amber-500/10",
     rose:    "text-rose-600 bg-rose-500/10",
   };
-  return (
-    <Card className="p-3">
+  const interactive = !!(onClick || href);
+  const body = (
+    <Card className={cn(
+      "p-3 transition-all duration-base ease-ios h-full",
+      interactive ? "group hover:border-primary/40 hover:shadow-elevation-3 cursor-pointer" : "",
+    )}>
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className={cn("h-7 w-7 rounded-md flex items-center justify-center", accent ? accentMap[accent] : "text-primary bg-primary/10")}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground">{sub}</div>}
+      <div className="text-2xl font-bold mt-1 tabular-nums">{value}</div>
+      <div className="text-[11px] text-muted-foreground flex items-center justify-between mt-0.5">
+        <span>{sub ?? " "}</span>
+        {interactive && <ArrowRight className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />}
+      </div>
     </Card>
   );
+  if (href) {
+    return <Link href={href} aria-label={`Open ${label}`} className="block">{body}</Link>;
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} aria-label={`View ${label} details`} className="w-full text-left">
+        {body}
+      </button>
+    );
+  }
+  return body;
 }
 
 function Stat({ label, value }: { label: string; value: any }) {

@@ -45,27 +45,33 @@ export default function LeadDetailPage() {
     toast.success("Note added");
   };
 
+  // Fall back to the leads list if we landed here directly (no browser history).
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else router.push("/leads");
+  };
+
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-1" />Back</Button>
+      <Button variant="ghost" size="sm" onClick={goBack}><ArrowLeft className="h-4 w-4 mr-1" />Back</Button>
 
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl">{lead.name}</CardTitle>
-                <div className="text-sm text-muted-foreground mt-0.5">{lead.title} · {lead.company}</div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-lg sm:text-xl break-words">{lead.name}</CardTitle>
+                <div className="text-sm text-muted-foreground mt-0.5 break-words">{lead.title} · {lead.company}</div>
               </div>
-              <Badge className={cn(TEMP_COLORS[lead.temperature])}>{lead.temperature}</Badge>
+              <Badge className={cn(TEMP_COLORS[lead.temperature], "shrink-0")}>{lead.temperature}</Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{formatPhone(lead.phone)}</div>
-            <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" />{lead.email || "—"}</div>
-            <div className="flex items-center gap-2"><Building className="h-4 w-4 text-muted-foreground" />{lead.industry || "—"}</div>
-            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><LocalTime timezone={lead.timezone} city={lead.city} state={lead.state} compact /></div>
-            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" />{lead.service_interest || "—"}</div>
+            <div className="flex items-center gap-2 min-w-0"><Phone className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{formatPhone(lead.phone)}</span></div>
+            <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{lead.email || "—"}</span></div>
+            <div className="flex items-center gap-2 min-w-0"><Building className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{lead.industry || "—"}</span></div>
+            <div className="flex items-center gap-2 min-w-0"><MapPin className="h-4 w-4 text-muted-foreground shrink-0" /><LocalTime timezone={lead.timezone} city={lead.city} state={lead.state} compact /></div>
+            <div className="flex items-center gap-2 min-w-0"><Briefcase className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{lead.service_interest || "—"}</span></div>
             <div className="pt-3 border-t grid grid-cols-2 gap-3">
               <div><div className="text-xs text-muted-foreground">Status</div><div className={cn("inline-flex mt-1 rounded-md px-2 py-0.5 text-xs font-medium", STATUS_COLORS[lead.status])}>{lead.status}</div></div>
               <div><div className="text-xs text-muted-foreground">Attempts</div><div className="text-base font-semibold mt-1">{lead.attempts}</div></div>

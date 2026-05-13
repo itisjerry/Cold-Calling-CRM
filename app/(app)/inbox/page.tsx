@@ -44,7 +44,7 @@ export default function InboxPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><InboxIcon className="h-6 w-6" /> Inbox</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><InboxIcon className="h-5 w-5 sm:h-6 sm:w-6" /> Inbox</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {pending.length} pending · {answered.length} answered · {myNotifications.filter((n) => !n.read_at).length} unread notifications
         </p>

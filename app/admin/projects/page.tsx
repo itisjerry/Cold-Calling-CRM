@@ -46,14 +46,14 @@ export default function AdminAllProjectsPage() {
     <div className="space-y-4">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-6 w-6" /> All projects</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-5 w-5 sm:h-6 sm:w-6" /> All projects</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} projects · {formatMoney(totalValue)} total value</p>
         </div>
       </div>
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 p-3 border-b">
-          <div className="relative flex-1 min-w-[200px] max-w-md">
+          <div className="relative flex-1 min-w-[160px] max-w-md">
             <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search projects…" className="pl-9" />
           </div>

@@ -62,8 +62,8 @@ export default function ImportPage() {
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Import Leads</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Drop a CSV. We'll auto-map columns, resolve timezones, and skip duplicates.</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Import Leads</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Drop a CSV. We'll auto-map columns, resolve timezones, and skip duplicates.</p>
       </div>
 
       {!rows.length && (
@@ -77,14 +77,14 @@ export default function ImportPage() {
             if (f) handleFile(f);
           }}
         >
-          <CardContent className="p-12 text-center">
+          <CardContent className="p-6 sm:p-12 text-center">
             <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Upload className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-lg font-semibold">Drop your CSV here</h3>
             <p className="text-sm text-muted-foreground mt-1">Required: <span className="font-mono">name</span>, <span className="font-mono">phone</span>. Recommended: company, email, city, state.</p>
             <input ref={inputRef} type="file" accept=".csv,text/csv" hidden onChange={(e) => e.target.files && handleFile(e.target.files[0])} />
-            <div className="mt-4 flex justify-center gap-2">
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Button onClick={() => inputRef.current?.click()}><FileSpreadsheet className="h-4 w-4 mr-1.5" />Choose File</Button>
               <Button variant="outline" onClick={() => { loadSample(); toast.success("Demo data loaded"); router.push("/leads"); }}>Load demo data</Button>
             </div>
@@ -115,9 +115,9 @@ export default function ImportPage() {
 
           {stats && (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-wrap gap-2">
                 <CardTitle className="text-base">Preview</CardTitle>
-                <div className="flex gap-2 text-sm">
+                <div className="flex gap-2 text-xs sm:text-sm flex-wrap">
                   <div className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="h-4 w-4" /><span className="font-semibold">{stats.unique.length}</span> new</div>
                   <div className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="h-4 w-4" /><span className="font-semibold">{stats.duplicates.length}</span> duplicates</div>
                 </div>

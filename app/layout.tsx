@@ -89,7 +89,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${mono.variable}`}>
-      <body className="font-sans min-h-screen bg-background">
+      <body className="font-sans min-h-screen min-h-[100dvh] bg-background overflow-x-hidden">
         <Providers>
           {children}
           <Toaster />

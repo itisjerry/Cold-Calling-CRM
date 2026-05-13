@@ -1,13 +1,13 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Search, Plus, Moon, Sun, Phone, Menu, Volume2, VolumeX } from "lucide-react";
 import { isSoundOn, setSoundOn, playChime } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "./command-palette";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { NotificationBell } from "./notification-bell";
@@ -15,9 +15,13 @@ import { UserSwitcher } from "./user-switcher";
 
 export function Topbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
+  const [navOpen, setNavOpen] = React.useState(false);
+  // Auto-close the mobile nav sheet when navigation happens.
+  React.useEffect(() => { setNavOpen(false); }, [pathname]);
 
   // Reactive sound preference
   const [soundOn, setSoundOnLocal] = React.useState(true);
@@ -60,7 +64,7 @@ export function Topbar() {
   return (
     <>
       <motion.header
-        className="sticky top-0 z-30 flex h-14 items-center gap-3 px-4 lg:px-6 glass border-b-0"
+        className="sticky top-0 z-30 flex h-14 items-center gap-2 sm:gap-3 px-2 sm:px-4 lg:px-6 glass border-b-0"
         style={{ boxShadow: shadowBox }}
       >
         {/* scroll-driven border bottom */}
@@ -70,25 +74,29 @@ export function Topbar() {
         />
 
         {/* Mobile sidebar trigger */}
-        <Sheet>
+        <Sheet open={navOpen} onOpenChange={setNavOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="lg:hidden"><Menu className="h-5 w-5" /></Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
             <Sidebar />
           </SheetContent>
         </Sheet>
 
         <button
           onClick={() => setCmdOpen(true)}
-          className="flex items-center gap-2 h-9 flex-1 max-w-md rounded-md border border-input bg-background/40 px-3 text-sm text-muted-foreground shadow-elevation-1 hover:bg-background/70 hover:border-border transition-all duration-base ease-ios"
+          className="flex items-center gap-2 h-9 flex-1 max-w-md rounded-md border border-input bg-background/40 px-3 text-sm text-muted-foreground shadow-elevation-1 hover:bg-background/70 hover:border-border transition-all duration-base ease-ios min-w-0"
         >
-          <Search className="h-4 w-4" />
-          <span className="flex-1 text-left">Search leads, companies, anything…</span>
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left truncate">
+            <span className="hidden sm:inline">Search leads, companies, anything…</span>
+            <span className="sm:hidden">Search…</span>
+          </span>
           <kbd className="hidden sm:inline-flex items-center rounded border bg-background/80 px-1.5 py-0.5 text-[10px] font-mono">⌘ K</kbd>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} className="hidden sm:inline-flex">
             <Plus className="h-4 w-4 mr-1" /> Quick add
           </Button>

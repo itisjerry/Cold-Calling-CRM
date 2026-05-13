@@ -962,7 +962,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: "helio-crm-store",
-      version: 3,
+      version: 4,
       migrate: (persisted: any, version) => {
         if (!persisted) return persisted;
         // v1 → v2: add lifecycle fields to leads + messages array
@@ -977,13 +977,15 @@ export const useStore = create<StoreState>()(
           }
           if (!Array.isArray(persisted.messages)) persisted.messages = [];
         }
-        // v2 → v3: introduce signedIn flag
-        // If a returning user already has data + a current user, treat them as signed in
-        // so we don't bounce them to /login on a refresh.
+        // v2 → v3: introduce signedIn flag (default off — login is required).
         if (version < 3) {
           if (typeof persisted.signedIn !== "boolean") {
-            persisted.signedIn = !!(persisted.currentUserId && persisted.seeded);
+            persisted.signedIn = false;
           }
+        }
+        // v3 → v4: enforce real login. Any returning user must re-enter credentials.
+        if (version < 4) {
+          persisted.signedIn = false;
         }
         return persisted;
       },

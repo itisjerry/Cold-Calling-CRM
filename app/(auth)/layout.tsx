@@ -108,7 +108,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center justify-center p-6 lg:p-12"
+          className="flex items-center justify-center p-4 sm:p-6 lg:p-12"
         >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -125,16 +125,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur-xl shadow-elevation-5 p-7 sm:p-8 relative overflow-hidden">
+            <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur-xl shadow-elevation-5 p-5 sm:p-7 md:p-8 relative overflow-hidden">
               {/* shine */}
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
               {children}
             </div>
 
             <p className="text-center text-[11px] text-muted-foreground/70 mt-6">
-              Tip: this is a demo build — try the{" "}
-              <Link href="/dashboard" className="text-primary hover:underline">Open Helio</Link>{" "}
-              shortcut.
+              Demo build · all accounts use the password{" "}
+              <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">password</code>
             </p>
           </motion.div>
         </motion.section>
@@ -198,21 +197,21 @@ function BackgroundField() {
           WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 80%)",
         }}
       />
-      {/* drifting orbs */}
+      {/* drifting orbs — sized down on mobile so they don't break layout / cause horizontal scroll */}
       <motion.div
-        className="absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full blur-[120px]"
+        className="absolute -top-32 -left-32 h-[280px] w-[280px] sm:h-[380px] sm:w-[380px] lg:h-[480px] lg:w-[480px] rounded-full blur-[100px] sm:blur-[120px]"
         style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.45), transparent 70%)" }}
         animate={{ x: [0, 60, -20, 0], y: [0, 40, -30, 0] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full blur-[140px]"
+        className="absolute -bottom-32 -right-32 h-[300px] w-[300px] sm:h-[420px] sm:w-[420px] lg:h-[520px] lg:w-[520px] rounded-full blur-[110px] sm:blur-[140px]"
         style={{ background: "radial-gradient(circle, hsl(var(--cold) / 0.40), transparent 70%)" }}
         animate={{ x: [0, -50, 30, 0], y: [0, -40, 20, 0] }}
         transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute top-1/3 left-1/2 h-[380px] w-[380px] -translate-x-1/2 rounded-full blur-[120px]"
+        className="absolute top-1/3 left-1/2 h-[220px] w-[220px] sm:h-[300px] sm:w-[300px] lg:h-[380px] lg:w-[380px] -translate-x-1/2 rounded-full blur-[100px] sm:blur-[120px]"
         style={{ background: "radial-gradient(circle, hsl(280 90% 60% / 0.20), transparent 70%)" }}
         animate={{ x: [-40, 40, -40], y: [-20, 30, -20] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}

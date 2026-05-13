@@ -5,11 +5,12 @@ import { useStore, useCurrentUser, useIsAdmin } from "@/lib/store";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LeadDetailDialog } from "@/components/dashboard/lead-detail-dialog";
 import { LocalTime } from "@/components/leads/local-time";
 import { callWindowState, localTime } from "@/lib/timezones";
 import { cn, TEMP_COLORS, daysSince } from "@/lib/utils";
 import {
-  Phone, Flame, Clock, ArrowRight, TrendingUp, Star, AlertTriangle, Sparkles,
+  Phone, Flame, Clock, ArrowRight, TrendingUp, Star, MessageSquare, Sparkles,
   Voicemail, PhoneMissed, PhoneOff, Check, X, Send, CalendarClock, ShieldCheck,
 } from "lucide-react";
 import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, Cell } from "recharts";
@@ -64,15 +65,59 @@ export default function DashboardPage() {
     [dueToday, settings, now],
   );
 
-  // KPIs
-  const callsToday = history.filter((h) => h.type === "call" && new Date(h.created_at) >= todayStart && (isAdmin ? true : h.by_user === me?.id)).length;
+  // KPIs — keep the FULL lists so the drill-down dialog can show every lead.
+  // Full "Today (new)" / "Today (old)" lists (not capped at 12 like the dashboard call lists).
+  const todaysNewAll = React.useMemo(
+    () =>
+      dueToday
+        .filter((l) => bucketLead(l) === "new")
+        .map((l) => ({ l, p: todayPriority(l, settings, now) }))
+        .sort((a, b) => b.p - a.p)
+        .map((x) => x.l),
+    [dueToday, settings, now],
+  );
+  const todaysOldAll = React.useMemo(
+    () =>
+      dueToday
+        .filter((l) => bucketLead(l) === "old")
+        .map((l) => ({ l, p: todayPriority(l, settings, now) }))
+        .sort((a, b) => b.p - a.p)
+        .map((x) => x.l),
+    [dueToday, settings, now],
+  );
+
+  // Today's call history (each row = one logged attempt).
+  const todaysCallHistory = React.useMemo(
+    () =>
+      history
+        .filter((h) => h.type === "call" && new Date(h.created_at) >= todayStart && (isAdmin ? true : h.by_user === me?.id))
+        .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)),
+    [history, isAdmin, me?.id, todayStart],
+  );
+  const callsToday = todaysCallHistory.length;
+
   const sevenDays = new Date(Date.now() - 7 * 86400000);
   const recentCalls = history.filter((h) => h.type === "call" && new Date(h.created_at) >= sevenDays && (isAdmin ? true : h.by_user === me?.id));
   const connects = recentCalls.filter((h) => h.disposition === "Answered" || h.disposition === "Qualified").length;
   const connectRate = recentCalls.length > 0 ? Math.round((connects / recentCalls.length) * 100) : 0;
   const qualifiedThisWeek = myLeads.filter((l) => l.status === "Qualified" && daysSince(l.updated_at) <= 7).length;
-  const hot = myLeads.filter((l) => l.temperature === "Hot" && !["Qualified", "Dead", "Not Interested"].includes(l.status)).length;
-  const sandbox = myLeads.filter((l) => bucketLead(l) === "sandbox").length;
+
+  const hotLeads = React.useMemo(
+    () => myLeads.filter((l) => l.temperature === "Hot" && !["Qualified", "Dead", "Not Interested"].includes(l.status)),
+    [myLeads],
+  );
+  const hot = hotLeads.length;
+
+  const inDiscussionLeads = React.useMemo(
+    () => myLeads.filter((l) => l.status === "In Discussion"),
+    [myLeads],
+  );
+  const inDiscussion = inDiscussionLeads.length;
+
+  // Drill-down dialog state
+  type DetailKey = "new" | "old" | "calls" | "hot" | "discussion";
+  const [detail, setDetail] = React.useState<DetailKey | null>(null);
+  const users = useStore((s) => s.users);
 
   // EOD summary — today's call dispositions
   const todaysCalls = history.filter(
@@ -111,40 +156,103 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
             Good {greet}, {firstName} —{" "}
             <span className="bg-gradient-to-r from-primary to-cold bg-clip-text text-transparent">
               {isAdmin ? "your team is on it." : "let's close some deals."}
             </span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             {!isAdmin && (
-              <> · You have <b>{todaysNew.length + todaysOld.length}</b> calls scheduled today.</>
+              <> · You have <b>{todaysNewAll.length + todaysOldAll.length}</b> calls scheduled today.</>
             )}
           </p>
         </div>
         {!isAdmin && (
-          <Button asChild size="lg" className="shadow-elevation-3">
+          <Button asChild size="lg" className="shadow-elevation-3 w-full sm:w-auto">
             <Link href="/call-mode"><Phone className="h-4 w-4 mr-1.5" />Open Call Mode</Link>
           </Button>
         )}
         {isAdmin && (
-          <Button asChild size="lg" variant="outline">
+          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
             <Link href="/admin"><ShieldCheck className="h-4 w-4 mr-1.5" />Open Command Center</Link>
           </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <KPI label="Today (new)"     value={todaysNew.length}      sub="never tried before"  icon={Sparkles} />
-        <KPI label="Today (old)"     value={todaysOld.length}      sub="follow-ups due"      icon={Clock} accent="amber" />
-        <KPI label="Calls today"     value={callsToday}            sub="attempts logged"     icon={Phone} />
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
+        <KPI label="Today (new)"     value={todaysNewAll.length}   sub="never tried before"  icon={Sparkles}                       onClick={() => setDetail("new")} />
+        <KPI label="Today (old)"     value={todaysOldAll.length}   sub="follow-ups due"      icon={Clock} accent="amber"           onClick={() => setDetail("old")} />
+        <KPI label="Calls today"     value={callsToday}            sub="attempts logged"     icon={Phone}                          onClick={() => setDetail("calls")} />
         <KPI label="Connect rate"    value={connectRate} suffix="%" sub="last 7 days"        icon={TrendingUp} accent="emerald" />
-        <KPI label="Hot in pipeline" value={hot}                   sub="need action"         icon={Flame} accent="red" />
-        <KPI label="In sandbox"      value={sandbox}               sub={`10/${MAX_ATTEMPTS}+ attempts`} icon={AlertTriangle} accent="amber" />
+        <KPI label="Hot in pipeline" value={hot}                   sub="need action"         icon={Flame} accent="red"             onClick={() => setDetail("hot")} />
+        <KPI label="In Discussion"   value={inDiscussion}          sub="active conversations" icon={MessageSquare} accent="emerald" onClick={() => setDetail("discussion")} />
       </div>
+
+      <LeadDetailDialog
+        open={detail === "new"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Today — New leads"
+        subtitle={`${todaysNewAll.length} lead${todaysNewAll.length === 1 ? "" : "s"} never attempted, sorted by readiness.`}
+        icon={<Sparkles className="h-5 w-5 text-primary" />}
+        mode="leads"
+        leads={todaysNewAll}
+        allLeads={leads}
+        users={users}
+        showOwner={isAdmin}
+      />
+      <LeadDetailDialog
+        open={detail === "old"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Today — Follow-ups due"
+        subtitle={`${todaysOldAll.length} lead${todaysOldAll.length === 1 ? "" : "s"} auto-scheduled for today.`}
+        icon={<Clock className="h-5 w-5 text-amber-500" />}
+        mode="leads"
+        leads={todaysOldAll}
+        allLeads={leads}
+        users={users}
+        showOwner={isAdmin}
+      />
+      <LeadDetailDialog
+        open={detail === "calls"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Calls today"
+        subtitle={`${todaysCallHistory.length} attempt${todaysCallHistory.length === 1 ? "" : "s"} logged today.`}
+        icon={<Phone className="h-5 w-5 text-primary" />}
+        mode="calls"
+        calls={todaysCallHistory}
+        allLeads={leads}
+        users={users}
+        showOwner={isAdmin}
+        emptyMessage="No calls logged today yet."
+      />
+      <LeadDetailDialog
+        open={detail === "hot"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="Hot leads in pipeline"
+        subtitle={`${hotLeads.length} hot lead${hotLeads.length === 1 ? "" : "s"} still need action.`}
+        icon={<Flame className="h-5 w-5 text-red-500" />}
+        mode="leads"
+        leads={hotLeads}
+        allLeads={leads}
+        users={users}
+        showOwner={isAdmin}
+      />
+      <LeadDetailDialog
+        open={detail === "discussion"}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title="In Discussion"
+        subtitle={`${inDiscussionLeads.length} lead${inDiscussionLeads.length === 1 ? "" : "s"} currently in active conversation.`}
+        icon={<MessageSquare className="h-5 w-5 text-emerald-600" />}
+        mode="leads"
+        leads={inDiscussionLeads}
+        allLeads={leads}
+        users={users}
+        showOwner={isAdmin}
+        emptyMessage="No leads are in discussion right now."
+      />
 
       {!isAdmin && (
         <div className="grid lg:grid-cols-2 gap-4">
@@ -331,7 +439,7 @@ function SummaryCell({ label, value, icon: Icon, tone }: { label: string; value:
 }
 
 function KPI({
-  label, value, sub, icon: Icon, accent, suffix = "",
+  label, value, sub, icon: Icon, accent, suffix = "", onClick,
 }: {
   label: string;
   value: number;
@@ -339,29 +447,49 @@ function KPI({
   icon: any;
   accent?: string;
   suffix?: string;
+  onClick?: () => void;
 }) {
   const accentMap: Record<string, string> = {
     emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
     red:     "text-red-600 dark:text-red-400 bg-red-500/10",
     amber:   "text-amber-600 dark:text-amber-400 bg-amber-500/10",
   };
+  const body = (
+    <Card className={cn(
+      "p-3 transition-all duration-base ease-ios h-full",
+      onClick ? "hover:border-primary/40 hover:shadow-elevation-3 cursor-pointer" : "hover:border-primary/30",
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className={cn(
+          "h-7 w-7 rounded-md flex items-center justify-center shadow-inner-hl",
+          accent ? accentMap[accent] : "text-primary bg-primary/10"
+        )}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="font-display text-2xl md:text-[28px] font-bold mt-1 tabular-nums leading-none">
+        <CountUp value={value} suffix={suffix} />
+      </div>
+      <div className="text-[11px] text-muted-foreground mt-1 flex items-center justify-between">
+        <span>{sub}</span>
+        {onClick && <ArrowRight className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />}
+      </div>
+    </Card>
+  );
   return (
     <TiltCard>
-      <Card className="p-3 transition-all duration-base ease-ios hover:border-primary/30">
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">{label}</div>
-          <div className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center shadow-inner-hl",
-            accent ? accentMap[accent] : "text-primary bg-primary/10"
-          )}>
-            <Icon className="h-4 w-4" />
-          </div>
-        </div>
-        <div className="font-display text-2xl md:text-[28px] font-bold mt-1 tabular-nums leading-none">
-          <CountUp value={value} suffix={suffix} />
-        </div>
-        <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>
-      </Card>
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={`View ${label} details`}
+          className="group w-full text-left"
+        >
+          {body}
+        </button>
+      ) : body}
     </TiltCard>
   );
 }
+

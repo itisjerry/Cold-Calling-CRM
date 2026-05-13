@@ -63,16 +63,16 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4 max-w-4xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Tune the engine that runs your day.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Tune the engine that runs your day.</p>
         </div>
         <Button onClick={save}>Save settings</Button>
       </div>
 
       <Tabs defaultValue="general">
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto justify-start sm:w-auto sm:justify-center">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="branding">Branding & PDF</TabsTrigger>
           <TabsTrigger value="customize">Customize</TabsTrigger>

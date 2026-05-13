@@ -66,45 +66,52 @@ export default function ProjectsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Qualified leads become projects. Track delivery end-to-end.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Qualified leads become projects. Track delivery end-to-end.</p>
         </div>
         <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1.5" />New Project</Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3 min-h-[500px]">
-        {STAGES.map((stg) => (
-          <div
-            key={stg.id}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => onDrop(e, stg.id)}
-            className={cn("rounded-lg border bg-gradient-to-b from-current to-transparent flex flex-col", stg.tint)}
-          >
-            <div className="p-3 border-b shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">{stg.label}</span>
-                <span className="text-xs font-mono text-muted-foreground">{byStage[stg.id].length}</span>
+      {/* Mobile / tablet: horizontal-scroll kanban. Desktop: 7-col grid. */}
+      <div className="-mx-3 sm:-mx-4 lg:mx-0 px-3 sm:px-4 lg:px-0 overflow-x-auto lg:overflow-visible">
+        <div className="flex lg:grid lg:grid-cols-7 gap-3 lg:min-h-[500px] min-w-max lg:min-w-0 pb-2 lg:pb-0">
+          {STAGES.map((stg) => (
+            <div
+              key={stg.id}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => onDrop(e, stg.id)}
+              className={cn(
+                "rounded-lg border bg-gradient-to-b from-current to-transparent flex flex-col shrink-0",
+                "w-[260px] lg:w-auto",
+                stg.tint
+              )}
+            >
+              <div className="p-3 border-b shrink-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">{stg.label}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{byStage[stg.id].length}</span>
+                </div>
+              </div>
+              <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[60vh] lg:max-h-[600px]">
+                {byStage[stg.id].map((p) => (
+                  <div
+                    key={p.id}
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", p.id)}
+                    className="rounded-md border bg-card p-2.5 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                  >
+                    <div className="font-medium text-sm break-words">{p.name}</div>
+                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                      {p.value ? <span className="font-mono inline-flex items-center gap-1"><DollarSign className="h-3 w-3" />{formatMoney(p.value)}</span> : <span>—</span>}
+                      {p.due_date && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3 shrink-0" />{p.due_date}</span>}
+                    </div>
+                  </div>
+                ))}
+                {byStage[stg.id].length === 0 && <div className="text-xs text-muted-foreground text-center py-6">Drop projects here</div>}
               </div>
             </div>
-            <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[600px]">
-              {byStage[stg.id].map((p) => (
-                <div
-                  key={p.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("text/plain", p.id)}
-                  className="rounded-md border bg-card p-2.5 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
-                >
-                  <div className="font-medium text-sm">{p.name}</div>
-                  <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                    {p.value ? <span className="font-mono inline-flex items-center gap-1"><DollarSign className="h-3 w-3" />{formatMoney(p.value)}</span> : <span>—</span>}
-                    {p.due_date && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{p.due_date}</span>}
-                  </div>
-                </div>
-              ))}
-              {byStage[stg.id].length === 0 && <div className="text-xs text-muted-foreground text-center py-6">Drop projects here</div>}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

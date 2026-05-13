@@ -23,12 +23,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!hydrated) {
     return (
-      <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex h-screen h-[100dvh] w-full overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
           <main className="flex-1 overflow-y-auto">
-            <div className="p-6 max-w-[1600px] mx-auto" />
+            <div className="p-4 sm:p-6 max-w-[1600px] mx-auto" />
           </main>
         </div>
       </div>
@@ -37,12 +37,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAdmin) {
     return (
-      <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex h-screen h-[100dvh] w-full overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
           <main className="flex-1 overflow-y-auto">
-            <div className="p-12 max-w-xl mx-auto text-center">
+            <div className="p-6 sm:p-12 max-w-xl mx-auto text-center">
               <ShieldOff className="h-12 w-12 mx-auto text-muted-foreground" />
               <h1 className="text-xl font-semibold mt-4">Admin access required</h1>
               <p className="text-sm text-muted-foreground mt-2">
@@ -59,12 +59,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <SessionGuard>
-      <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex h-screen h-[100dvh] w-full overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
-          <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-            <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+          <main className="flex-1 overflow-y-auto pb-24 lg:pb-0">
+            <div className="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto">
               <PageTransition>{children}</PageTransition>
               <AppFooter />
             </div>

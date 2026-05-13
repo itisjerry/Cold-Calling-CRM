@@ -130,19 +130,19 @@ export default function LeadsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">
             {scope === "mine" ? "My leads" : scope === "unassigned" ? "Unassigned leads" : scope === "all" ? "Leads" : `${users.find((u) => u.id === scope)?.full_name ?? "User"}'s leads`}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             <span className="font-medium text-foreground">{filtered.length}</span> shown ·{" "}
             <span className="text-emerald-600">{newCount}</span> new ·{" "}
             <span className="text-red-500">{hot}</span> hot · {resolved.label}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild><Link href="/import"><Upload className="h-4 w-4 mr-1.5" />Import</Link></Button>
-          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 mr-1.5" />Export</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild><Link href="/import"><Upload className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Import</span></Link></Button>
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Export</span></Button>
           <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1.5" />Add Lead</Button>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function LeadsPage() {
                   value={["mine","all","unassigned"].includes(scope) ? "_picker" : scope}
                   onValueChange={(v) => { if (v !== "_picker") setScope(v as Scope); }}
                 >
-                  <SelectTrigger className="w-[170px]">
+                  <SelectTrigger className="w-full sm:w-[170px]">
                     <SelectValue placeholder="Specific agent…" />
                   </SelectTrigger>
                   <SelectContent>
@@ -271,7 +271,7 @@ export default function LeadsPage() {
               </Popover>
 
               <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="score">Sort: Score</SelectItem>
                   <SelectItem value="created">Sort: Date Added</SelectItem>
@@ -371,19 +371,21 @@ export default function LeadsPage() {
       </Card>
 
       {selected.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-wrap items-center gap-2 rounded-full border bg-card shadow-lg px-4 py-2">
-          <span className="text-sm font-medium">{selected.size} selected</span>
-          <div className="h-4 w-px bg-border" />
-          <Button size="sm" variant="ghost" onClick={() => { bulkUpdate([...selected], { temperature: "Hot" }); toast.success(`Marked ${selected.size} as Hot`); setSelected(new Set()); }}>Mark Hot</Button>
-          <Button size="sm" variant="ghost" onClick={() => { bulkUpdate([...selected], { temperature: "Warm" }); toast.success(`Marked ${selected.size} as Warm`); setSelected(new Set()); }}>Mark Warm</Button>
-          <Button size="sm" variant="ghost" onClick={() => { bulkUpdate([...selected], { temperature: "Cold" }); toast.success(`Marked ${selected.size} as Cold`); setSelected(new Set()); }}>Mark Cold</Button>
-          <Button size="sm" variant="ghost" onClick={() => { bulkUpdate([...selected], { status: "Follow-up" }); toast.success(`Moved ${selected.size} to Follow-up`); setSelected(new Set()); }}>Follow-up</Button>
-          {isAdmin && (
-            <Button size="sm" variant="ghost" onClick={() => setPushOpen(true)}>
-              <UserPlus className="h-3.5 w-3.5 mr-1" /> Push to agent
-            </Button>
-          )}
-          <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Delete ${selected.size} leads?`)) { bulkDelete([...selected]); toast.success("Deleted"); setSelected(new Set()); } }} className="text-destructive hover:text-destructive">Delete</Button>
+        <div className="fixed bottom-20 lg:bottom-6 inset-x-3 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 z-40 max-w-full rounded-2xl lg:rounded-full border bg-card shadow-lg px-3 lg:px-4 py-2 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="text-sm font-medium shrink-0">{selected.size} selected</span>
+            <div className="h-4 w-px bg-border shrink-0" />
+            <Button size="sm" variant="ghost" className="shrink-0" onClick={() => { bulkUpdate([...selected], { temperature: "Hot" }); toast.success(`Marked ${selected.size} as Hot`); setSelected(new Set()); }}>Mark Hot</Button>
+            <Button size="sm" variant="ghost" className="shrink-0" onClick={() => { bulkUpdate([...selected], { temperature: "Warm" }); toast.success(`Marked ${selected.size} as Warm`); setSelected(new Set()); }}>Mark Warm</Button>
+            <Button size="sm" variant="ghost" className="shrink-0" onClick={() => { bulkUpdate([...selected], { temperature: "Cold" }); toast.success(`Marked ${selected.size} as Cold`); setSelected(new Set()); }}>Mark Cold</Button>
+            <Button size="sm" variant="ghost" className="shrink-0" onClick={() => { bulkUpdate([...selected], { status: "Follow-up" }); toast.success(`Moved ${selected.size} to Follow-up`); setSelected(new Set()); }}>Follow-up</Button>
+            {isAdmin && (
+              <Button size="sm" variant="ghost" className="shrink-0" onClick={() => setPushOpen(true)}>
+                <UserPlus className="h-3.5 w-3.5 mr-1" /> Push to agent
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="shrink-0 text-destructive hover:text-destructive" onClick={() => { if (confirm(`Delete ${selected.size} leads?`)) { bulkDelete([...selected]); toast.success("Deleted"); setSelected(new Set()); } }}>Delete</Button>
+          </div>
         </div>
       )}
 

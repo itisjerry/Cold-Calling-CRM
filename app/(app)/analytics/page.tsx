@@ -57,8 +57,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Trends, conversion, effort over time. All derived from your call activity.</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Analytics</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Trends, conversion, effort over time. All derived from your call activity.</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
               <BarChart data={funnel} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="stage" tick={{ fontSize: 10 }} width={100} />
+                <YAxis type="category" dataKey="stage" tick={{ fontSize: 10 }} width={80} />
                 <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                 <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
               </BarChart>

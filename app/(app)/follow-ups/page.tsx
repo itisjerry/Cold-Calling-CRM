@@ -59,13 +59,13 @@ export default function FollowupsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Follow-ups</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Follow-ups</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {tueThu ? <span className="text-emerald-600 font-medium">Tue/Thu boost active</span> : "Tue/Thu boost not active today"} · Hot unanswered leads at the top.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Flame className="h-4 w-4 text-red-500" /> Hot — Unanswered ({hotUnanswered.length})</CardTitle></CardHeader>
           <div className="p-2 pt-0 space-y-1 max-h-[520px] overflow-y-auto">

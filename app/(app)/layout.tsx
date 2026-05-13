@@ -11,14 +11,14 @@ import { SessionGuard } from "@/components/auth/session-guard";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionGuard>
-      <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex h-screen h-[100dvh] w-full overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
           <OnboardingBanner />
           <UpdateRequestBanner />
-          <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-            <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+          <main className="flex-1 overflow-y-auto pb-24 lg:pb-0">
+            <div className="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto">
               <PageTransition>{children}</PageTransition>
               <AppFooter />
             </div>

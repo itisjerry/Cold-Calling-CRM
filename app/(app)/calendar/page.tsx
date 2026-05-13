@@ -58,12 +58,12 @@ export default function CalendarPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Callbacks, tasks, and project milestones.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Calendar</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Callbacks, tasks, and project milestones.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button variant="ghost" size="icon" onClick={() => setCursor(new Date(year, month - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-          <div className="text-sm font-medium min-w-[120px] text-center">
+          <div className="text-xs sm:text-sm font-medium min-w-[100px] sm:min-w-[120px] text-center">
             {cursor.toLocaleString("en-US", { month: "long", year: "numeric" })}
           </div>
           <Button variant="ghost" size="icon" onClick={() => setCursor(new Date(year, month + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
@@ -73,26 +73,48 @@ export default function CalendarPage() {
 
       <Card className="p-0 overflow-hidden">
         <div className="grid grid-cols-7 border-b">
-          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => <div key={d} className="p-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
+            <div key={d} className="p-1.5 sm:p-2 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{d.charAt(0)}</span>
+            </div>
+          ))}
         </div>
         <div className="grid grid-cols-7">
           {cells.map((d, i) => (
-            <div key={i} className={cn("min-h-[110px] border-b border-r p-1.5 last:border-r-0", !d && "bg-muted/30")}>
+            <div key={i} className={cn("min-h-[64px] sm:min-h-[110px] border-b border-r p-1 sm:p-1.5 last:border-r-0", !d && "bg-muted/30")}>
               {d && (
                 <>
-                  <div className={cn("text-xs font-medium mb-1", isToday(d) && "inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground")}>{d.getDate()}</div>
+                  <div className={cn("text-[10px] sm:text-xs font-medium mb-1", isToday(d) && "inline-flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-primary text-primary-foreground")}>{d.getDate()}</div>
                   <div className="space-y-0.5">
-                    {eventsForDay(d).slice(0, 3).map((ev, j) => (
-                      ev.href ? (
-                        <Link key={j} href={ev.href} className={cn("block truncate text-[10px] px-1.5 py-0.5 rounded",
-                          ev.type === "callback" ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                          : ev.type === "task" ? "bg-primary/15 text-primary"
-                          : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                        )}>{ev.label}</Link>
-                      ) : (
-                        <div key={j} className="truncate text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">{ev.label}</div>
-                      )
-                    ))}
+                    {/* Mobile: show event dots only. Desktop: show labels. */}
+                    <div className="flex sm:hidden flex-wrap gap-0.5">
+                      {eventsForDay(d).slice(0, 3).map((ev, j) => (
+                        <span
+                          key={j}
+                          className={cn(
+                            "h-1.5 w-1.5 rounded-full",
+                            ev.type === "callback" ? "bg-amber-500"
+                              : ev.type === "task" ? "bg-primary"
+                              : "bg-emerald-500"
+                          )}
+                          title={ev.label}
+                        />
+                      ))}
+                    </div>
+                    <div className="hidden sm:block space-y-0.5">
+                      {eventsForDay(d).slice(0, 3).map((ev, j) => (
+                        ev.href ? (
+                          <Link key={j} href={ev.href} className={cn("block truncate text-[10px] px-1.5 py-0.5 rounded",
+                            ev.type === "callback" ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                            : ev.type === "task" ? "bg-primary/15 text-primary"
+                            : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                          )}>{ev.label}</Link>
+                        ) : (
+                          <div key={j} className="truncate text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">{ev.label}</div>
+                        )
+                      ))}
+                    </div>
                   </div>
                 </>
               )}

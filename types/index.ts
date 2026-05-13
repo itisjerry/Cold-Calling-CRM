@@ -49,6 +49,8 @@ export interface User {
   role: UserRole;
   active: boolean;
   created_at: string;
+  /** Demo-only credential. Never sent over the wire — used by the local picker form. */
+  password?: string;
 }
 
 export interface Profile {

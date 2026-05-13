@@ -44,7 +44,7 @@ export default function AdminAllLeadsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Users className="h-6 w-6" /> All leads</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><Users className="h-5 w-5 sm:h-6 sm:w-6" /> All leads</h1>
           <p className="text-sm text-muted-foreground mt-1">{leads.length} total · {filtered.length} shown · {selected.length} selected</p>
         </div>
         <div className="flex gap-2">

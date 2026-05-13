@@ -122,11 +122,11 @@ export default function CallModePage() {
           </select>
         )}
       </div>
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100vh-9rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100dvh-9rem)]">
       {/* Queue */}
       <Card className={cn(
         "lg:col-span-3 lg:flex lg:flex-col overflow-hidden",
-        mobilePane === "queue" ? "flex flex-col h-[70vh]" : "hidden lg:flex"
+        mobilePane === "queue" ? "flex flex-col h-[calc(100dvh-13rem)]" : "hidden lg:flex"
       )}>
         <CardHeader className="pb-3 border-b shrink-0">
           <CardTitle className="text-sm flex items-center justify-between">
@@ -183,7 +183,7 @@ export default function CallModePage() {
       {/* Current Lead */}
       <Card className={cn(
         "lg:col-span-5 lg:flex lg:flex-col overflow-hidden",
-        mobilePane === "lead" ? "flex flex-col" : "hidden lg:flex"
+        mobilePane === "lead" ? "flex flex-col min-h-[calc(100dvh-13rem)]" : "hidden lg:flex"
       )}>
         {!current ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -193,23 +193,23 @@ export default function CallModePage() {
           </div>
         ) : (
           <>
-            <div className="p-5 border-b">
+            <div className="p-4 sm:p-5 border-b">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight">{current.name}</h2>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight break-words">{current.name}</h2>
                     <Badge className={cn(TEMP_COLORS[current.temperature])}>{current.temperature}</Badge>
                   </div>
-                  <div className="text-sm text-muted-foreground mt-0.5">{current.title} · {current.company}</div>
+                  <div className="text-sm text-muted-foreground mt-0.5 break-words">{current.title} · {current.company}</div>
                 </div>
                 <LocalTime timezone={current.timezone} city={current.city} state={current.state} />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-4 text-sm">
-                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><a href={`tel:${current.phone}`} className="hover:underline font-mono">{formatPhone(current.phone)}</a></div>
-                <div className="flex items-center gap-2 truncate"><Mail className="h-4 w-4 text-muted-foreground shrink-0" /><a href={`mailto:${current.email}`} className="hover:underline truncate">{current.email}</a></div>
-                <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" />{current.service_interest}</div>
-                <div className="flex items-center gap-2"><Building className="h-4 w-4 text-muted-foreground" />{current.industry}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 text-sm">
+                <div className="flex items-center gap-2 min-w-0"><Phone className="h-4 w-4 text-muted-foreground shrink-0" /><a href={`tel:${current.phone}`} className="hover:underline font-mono truncate">{formatPhone(current.phone)}</a></div>
+                <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-muted-foreground shrink-0" /><a href={`mailto:${current.email}`} className="hover:underline truncate">{current.email}</a></div>
+                <div className="flex items-center gap-2 min-w-0"><Briefcase className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{current.service_interest}</span></div>
+                <div className="flex items-center gap-2 min-w-0"><Building className="h-4 w-4 text-muted-foreground shrink-0" /><span className="truncate">{current.industry}</span></div>
               </div>
 
               <div className="flex gap-2 mt-4">
@@ -243,7 +243,7 @@ export default function CallModePage() {
       {/* Side: tabs */}
       <Card className={cn(
         "lg:col-span-4 lg:flex lg:flex-col overflow-hidden",
-        mobilePane === "extras" ? "flex flex-col h-[70vh]" : "hidden lg:flex"
+        mobilePane === "extras" ? "flex flex-col h-[calc(100dvh-13rem)]" : "hidden lg:flex"
       )}>
         {!current ? <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Pick a lead first</div> : (
           <Tabs defaultValue="history" className="flex flex-col h-full">

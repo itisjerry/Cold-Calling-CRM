@@ -40,10 +40,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><UserCog className="h-6 w-6" /> Users</h1>
-          <p className="text-sm text-muted-foreground mt-1">{users.length} users · {users.filter(u => u.active).length} active</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><UserCog className="h-5 w-5 sm:h-6 sm:w-6" /> Users</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{users.length} users · {users.filter(u => u.active).length} active</p>
         </div>
         <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add user</Button>
       </div>

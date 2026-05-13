@@ -56,9 +56,14 @@ export default function AgentDrillPage() {
   const qualified = myLeads.filter((l) => l.status === "Qualified").length;
   const hot = myLeads.filter((l) => l.temperature === "Hot").length;
 
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else router.push("/admin/users");
+  };
+
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
+      <Button variant="ghost" size="sm" onClick={goBack}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -69,7 +74,7 @@ export default function AgentDrillPage() {
             {initials(user.full_name)}
           </span>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{user.full_name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{user.full_name}</h1>
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <Mail className="h-3 w-3" /> {user.email}
               <Badge variant="outline" className="ml-1">{user.role}</Badge>

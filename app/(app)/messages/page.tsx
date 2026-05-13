@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, initials, relativeTime } from "@/lib/utils";
-import { MessageSquare, Send, Tag, Search, X as XIcon, Briefcase, User as UserIcon } from "lucide-react";
+import { MessageSquare, Send, Tag, Search, X as XIcon, Briefcase, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { Message, User, Lead, Project } from "@/types";
 import { Reveal } from "@/components/motion/reveal";
 
@@ -32,8 +32,11 @@ export default function MessagesPage() {
   const [activePartnerId, setActivePartnerId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
 
+  // Auto-select the first partner only on desktop so mobile lands on the inbox list.
   React.useEffect(() => {
-    if (!activePartnerId && partners[0]) setActivePartnerId(partners[0].id);
+    if (typeof window === "undefined") return;
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    if (isDesktop && !activePartnerId && partners[0]) setActivePartnerId(partners[0].id);
   }, [partners, activePartnerId]);
 
   const activePartner = partners.find((p) => p.id === activePartnerId);
@@ -87,9 +90,14 @@ export default function MessagesPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] min-h-[60vh]">
-          {/* Threads */}
-          <aside className="border-r border-border/60 bg-muted/20 flex flex-col">
+        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] min-h-[70vh] md:min-h-[60vh]">
+          {/* Threads — full width on mobile when no partner selected, hidden when one is active */}
+          <aside
+            className={cn(
+              "border-r border-border/60 bg-muted/20 flex-col md:flex",
+              activePartnerId ? "hidden md:flex" : "flex"
+            )}
+          >
             <div className="p-3 border-b border-border/60">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -140,21 +148,24 @@ export default function MessagesPage() {
             </div>
           </aside>
 
-          {/* Active thread */}
+          {/* Active thread — hidden on mobile when no partner selected */}
           {activePartner ? (
-            <Thread
-              me={me!}
-              partner={activePartner}
-              messages={thread}
-              leads={leads}
-              projects={projects}
-              onSend={(body, lead_id, project_id) => {
-                if (!body.trim()) return;
-                sendMessage({ to_user: activePartner.id, body, lead_id, project_id });
-              }}
-            />
+            <div className={cn("flex flex-col min-w-0", "flex")}>
+              <Thread
+                me={me!}
+                partner={activePartner}
+                messages={thread}
+                leads={leads}
+                projects={projects}
+                onBack={() => setActivePartnerId(null)}
+                onSend={(body, lead_id, project_id) => {
+                  if (!body.trim()) return;
+                  sendMessage({ to_user: activePartner.id, body, lead_id, project_id });
+                }}
+              />
+            </div>
           ) : (
-            <div className="flex items-center justify-center text-sm text-muted-foreground p-12">
+            <div className="hidden md:flex items-center justify-center text-sm text-muted-foreground p-12">
               Pick a teammate to start chatting.
             </div>
           )}
@@ -165,7 +176,7 @@ export default function MessagesPage() {
 }
 
 function Thread({
-  me, partner, messages, leads, projects, onSend,
+  me, partner, messages, leads, projects, onSend, onBack,
 }: {
   me: User;
   partner: User;
@@ -173,6 +184,7 @@ function Thread({
   leads: Lead[];
   projects: Project[];
   onSend: (body: string, lead_id?: string | null, project_id?: string | null) => void;
+  onBack?: () => void;
 }) {
   const [body, setBody] = React.useState("");
   const [taggedLead, setTaggedLead] = React.useState<Lead | null>(null);
@@ -202,16 +214,27 @@ function Thread({
   };
 
   return (
-    <section className="flex flex-col min-w-0">
+    <section className="flex flex-col min-w-0 flex-1">
       <header className="flex items-center gap-3 p-3 border-b border-border/60 bg-card/40 backdrop-blur-sm">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="md:hidden h-8 w-8 -ml-1"
+            aria-label="Back to inbox"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <span
-          className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-elevation-1 shadow-inner-hl"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-elevation-1 shadow-inner-hl shrink-0"
           style={{ background: partner.avatar_color }}
         >
           {initials(partner.full_name)}
         </span>
-        <div>
-          <div className="text-sm font-semibold">{partner.full_name}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold truncate">{partner.full_name}</div>
           <div className="text-xs text-muted-foreground capitalize">{partner.role}</div>
         </div>
       </header>

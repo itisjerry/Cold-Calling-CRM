@@ -11,7 +11,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><FileText className="h-6 w-6" /> Reports</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><FileText className="h-5 w-5 sm:h-6 sm:w-6" /> Reports</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {isAdmin
             ? "Generate branded PDF reports for the whole team or any agent."

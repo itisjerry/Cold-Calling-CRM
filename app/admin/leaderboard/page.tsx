@@ -57,7 +57,7 @@ export default function AdminLeaderboardPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Trophy className="h-6 w-6 text-amber-500" /> Leaderboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" /> Leaderboard</h1>
           <p className="text-sm text-muted-foreground mt-1">{resolved.label} · {ranked.length} agents</p>
         </div>
         {tab === "custom" && <DateRangeChip value={range} onChange={setRange} />}

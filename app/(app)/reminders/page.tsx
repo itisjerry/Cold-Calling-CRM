@@ -33,10 +33,10 @@ export default function RemindersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Bell className="h-6 w-6" /> Reminders</h1>
-          <p className="text-sm text-muted-foreground mt-1">{due.length} due · {upcoming.length} upcoming · {done.length} done</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2"><Bell className="h-5 w-5 sm:h-6 sm:w-6" /> Reminders</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{due.length} due · {upcoming.length} upcoming · {done.length} done</p>
         </div>
         {isAdmin && (
           <Button size="sm" onClick={() => setAddOpen(true)}>

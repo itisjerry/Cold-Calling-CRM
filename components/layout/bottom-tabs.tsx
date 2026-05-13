@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, LayoutGroup } from "framer-motion";
 import { LayoutDashboard, Users, Phone, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,9 @@ const TABS = [
  */
 export function BottomTabs() {
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  // Close the "More" sheet automatically when the route changes.
+  React.useEffect(() => { setMoreOpen(false); }, [pathname]);
   return (
     <nav
       className={cn(
@@ -29,7 +32,7 @@ export function BottomTabs() {
       )}
     >
       <LayoutGroup id="bottom-tabs">
-        <div className="flex items-stretch h-14 max-w-md mx-auto px-2">
+        <div className="flex items-stretch h-14 max-w-2xl mx-auto px-2">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = pathname === t.href || (t.href !== "/" && pathname?.startsWith(t.href + "/"));
@@ -55,7 +58,7 @@ export function BottomTabs() {
               </Link>
             );
           })}
-          <Sheet>
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger asChild>
               <button
                 className={cn(
@@ -69,6 +72,7 @@ export function BottomTabs() {
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
               <Sidebar />
             </SheetContent>
           </Sheet>
