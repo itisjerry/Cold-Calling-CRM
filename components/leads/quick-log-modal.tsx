@@ -78,6 +78,24 @@ export function QuickLogModal({ open, onOpenChange, lead }: Props) {
     return () => window.removeEventListener("keydown", handler);
   }, [open]);
 
+  // Live preview of what the algorithm will do.
+  // IMPORTANT: keep this hook above the `if (!lead) return null` early
+  // return — otherwise the hook count differs across renders when `lead`
+  // flips null/non-null and React throws #310 ("rendered fewer hooks").
+  const preview = React.useMemo(() => {
+    if (!selected) return null;
+    if (selected === "Qualified") return "→ Qualified, pipeline started, no auto re-attempt.";
+    if (selected === "Not Interested") return "→ Filed under Not Interested with the reason you provide.";
+    if (selected === "Wrong Number") return "→ Lead retired (Dead).";
+    if (selected === "Answered") return "→ Connected, conversation begins. Plan the next step yourself.";
+    if (selected === "Send Info") return "→ Info sent — auto-rescheduled in ~48 hours, time-shifted.";
+    if (selected === "Callback Requested") return "→ Honors your callback time below.";
+    if (selected === "Busy") return "→ Auto-rescheduled in ~2 hours (rotated time-of-day).";
+    if (selected === "No Answer") return "→ Auto-rescheduled in ~5 hours (rotated time-of-day).";
+    if (selected === "Voicemail") return "→ Auto-rescheduled in ~22 hours (rotated time-of-day).";
+    return null;
+  }, [selected]);
+
   if (!lead) return null;
 
   const requiresCallback = selected === "Callback Requested";
@@ -126,21 +144,6 @@ export function QuickLogModal({ open, onOpenChange, lead }: Props) {
     }
     onOpenChange(false);
   };
-
-  // Live preview of what the algorithm will do
-  const preview = React.useMemo(() => {
-    if (!selected) return null;
-    if (selected === "Qualified") return "→ Qualified, pipeline started, no auto re-attempt.";
-    if (selected === "Not Interested") return "→ Filed under Not Interested with the reason you provide.";
-    if (selected === "Wrong Number") return "→ Lead retired (Dead).";
-    if (selected === "Answered") return "→ Connected, conversation begins. Plan the next step yourself.";
-    if (selected === "Send Info") return "→ Info sent — auto-rescheduled in ~48 hours, time-shifted.";
-    if (selected === "Callback Requested") return "→ Honors your callback time below.";
-    if (selected === "Busy") return "→ Auto-rescheduled in ~2 hours (rotated time-of-day).";
-    if (selected === "No Answer") return "→ Auto-rescheduled in ~5 hours (rotated time-of-day).";
-    if (selected === "Voicemail") return "→ Auto-rescheduled in ~22 hours (rotated time-of-day).";
-    return null;
-  }, [selected]);
 
   const sandboxWarning = lead.attempts >= 9;
 

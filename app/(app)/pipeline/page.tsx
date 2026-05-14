@@ -168,9 +168,11 @@ export default function PipelinePage() {
             )}
           </div>
           <Select value={tempF} onValueChange={(v) => setTempF(v as any)}>
-            <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[140px] whitespace-nowrap [&>span]:truncate">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All temperatures</SelectItem>
+              <SelectItem value="all">All temps</SelectItem>
               <SelectItem value="Hot">🔥 Hot</SelectItem>
               <SelectItem value="Warm">🌤️ Warm</SelectItem>
               <SelectItem value="Cold">❄️ Cold</SelectItem>
