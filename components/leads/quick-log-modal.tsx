@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +54,7 @@ function formatDateTime(iso: string, tz?: string | null): string {
 }
 
 export function QuickLogModal({ open, onOpenChange, lead }: Props) {
+  const router = useRouter();
   const logCallAttempt = useStore((s) => s.logCallAttempt);
 
   const [selected, setSelected] = React.useState<Disposition | null>(null);
@@ -108,6 +110,11 @@ export function QuickLogModal({ open, onOpenChange, lead }: Props) {
     if (selected === "Qualified") {
       celebrate();
       toast.success(`🎉 ${lead.name} qualified!`, { description: "Pipeline branch active." });
+    } else if (selected === "Not Interested") {
+      toast.success(`${lead.name} filed under Not Interested`, {
+        description: "Reason saved. They're out of active rotation.",
+        action: { label: "View", onClick: () => router.push("/not-interested") },
+      });
     } else if (result.sandboxed) {
       toast.warning(`${lead.name} moved to Sandbox`, { description: "10 attempts reached — review for revival." });
     } else if (result.next_attempt_at) {

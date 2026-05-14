@@ -12,8 +12,6 @@ import { LocalTime } from "@/components/leads/local-time";
 import { cn, TEMP_COLORS, formatPhone, relativeTime } from "@/lib/utils";
 import { X, Search, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
-import { Reveal } from "@/components/motion/reveal";
-import { StaggerList, StaggerItem } from "@/components/motion/stagger";
 
 type Scope = "mine" | "all";
 
@@ -75,31 +73,28 @@ export default function NotInterestedPage() {
           No leads here. Marking a call as <b>Not Interested</b> will file them with their reason.
         </Card>
       ) : (
-        <Reveal>
-          <StaggerList className="grid md:grid-cols-2 gap-3">
-            {xs.map((l) => (
-              <StaggerItem key={l.id}>
-                <NotInterestedCard
-                  lead={l}
-                  onSave={(reason) => {
-                    updateLead(l.id, { not_interested_reason: reason });
-                    toast.success("Reason updated");
-                  }}
-                  onRevive={() => {
-                    updateLead(l.id, {
-                      status: "New",
-                      pipeline: "New",
-                      attempts: 0,
-                      next_attempt_at: null,
-                      not_interested_reason: null,
-                    });
-                    toast.success(`${l.name} revived`);
-                  }}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerList>
-        </Reveal>
+        <div className="grid md:grid-cols-2 gap-3">
+          {xs.map((l) => (
+            <NotInterestedCard
+              key={l.id}
+              lead={l}
+              onSave={(reason) => {
+                updateLead(l.id, { not_interested_reason: reason });
+                toast.success("Reason updated");
+              }}
+              onRevive={() => {
+                updateLead(l.id, {
+                  status: "New",
+                  pipeline: "New",
+                  attempts: 0,
+                  next_attempt_at: null,
+                  not_interested_reason: null,
+                });
+                toast.success(`${l.name} revived`);
+              }}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

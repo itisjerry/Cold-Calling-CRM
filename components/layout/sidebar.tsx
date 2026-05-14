@@ -46,6 +46,7 @@ const AGENT_NAV = [
 const ADMIN_NAV = [
   { section: "Command", items: [
     { href: "/admin",            label: "Admin Dashboard", icon: Shield },
+    { href: "/call-mode",        label: "Call Mode",       icon: Phone, live: true },
     { href: "/admin/users",      label: "Users",           icon: UserCog },
     { href: "/admin/leads",      label: "All Leads",       icon: Users },
     { href: "/admin/projects",   label: "All Projects",    icon: Briefcase },
@@ -63,6 +64,7 @@ const ADMIN_NAV = [
   ]},
   { section: "Workspace", items: [
     { href: "/pipeline",   label: "Pipeline",   icon: GitBranch },
+    { href: "/projects",   label: "Projects",   icon: Briefcase },
     { href: "/tasks",      label: "Tasks",      icon: CheckSquare },
     { href: "/reminders",  label: "Reminders",  icon: Bell },
     { href: "/calendar",   label: "Calendar",   icon: Calendar },
