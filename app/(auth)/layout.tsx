@@ -132,8 +132,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <p className="text-center text-[11px] text-muted-foreground/70 mt-6">
-              Demo build · all accounts use the password{" "}
-              <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">password</code>
+              Helio CRM · internal tool · access by invitation only
             </p>
           </motion.div>
         </motion.section>
